@@ -31,8 +31,6 @@
 //  TODO: if the last command resulted in an I2C error, and we're not currently using I2C,
 //        the red LED should blink slowly.  But
 //        0-byte writes that result in a NACK is not considered an error.
-//  TODO: if we're not having a native USB interface, need some other way to start the bootloader
-//  TODO: (Kevin) make sure this works with that Allegro chip which had odd timing requirements
 //  TODO: (some day) to support multi-master systems, we would want to have a way to do
 //    repeated starts, and a way to automatically retry a few times when we the arbitration is lost.
 //
@@ -816,7 +814,10 @@ static void reset_serial_port_state()
   tx_byte_count = 0;
 }
 
-// When the USB Host sends "Send Break" request with a non
+// When the USB Host sends "Send Break" request with a non-zero
+// duration, reset the serial port state.  This is useful for the
+// user to do after opening the port, so the next byte is guaranteed
+// to be interpreted as a command.
 void tud_cdc_send_break_cb(uint8_t itf, uint16_t duration_ms)
 {
   (void)itf;
@@ -826,6 +827,16 @@ void tud_cdc_send_break_cb(uint8_t itf, uint16_t duration_ms)
   }
 }
 
+void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts)
+{
+  (void)itf; (void)rts;
+  cdc_line_coding_t coding;
+  tud_cdc_n_get_line_coding(0, &coding);
+  if (coding.bit_rate == 600 && dtr == 0)
+  {
+    start_bootloader_soon = 1;
+  }
+}
 
 static void rx_service()
 {
@@ -919,13 +930,3 @@ int main()
     sleep_service();
   }
 }
-
-// TODO: if we are going to have a native USB interface, here's the code for it
-//void usb_vendor_request_handler(const UsbSetupPacket * setup)
-//{
-//  if (setup->bmRequestType == 0x40 && setup->bRequest == 0xFF)
-//  {
-//    start_bootloader_soon = 1;
-//    usb_control_ack();
-//  }
-//}
