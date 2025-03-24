@@ -23,12 +23,17 @@
  *
  */
 
-#ifndef _TUSB_CONFIG_H_
-#define _TUSB_CONFIG_H_
+#pragma once
 
-#ifdef __cplusplus
- extern "C" {
-#endif
+#define USB_VENDOR_ID                  0x1FFB   // Pololu Corporation
+#define USB_PRODUCT_ID                 0x2502   // Pololu USB-to-I2C Adapter
+#define USB_FIRMWARE_VERSION           0x100
+
+#define USB_VENDOR_STRING              "Pololu Corporation"
+#define USB_PRODUCT_STRING             "Pololu USB-to-I2C Adapter"
+#define USB_NATIVE_INTERFACE_STRING    "Pololu USB-to-I2C Adapter"
+#define USB_CDC_INTERFACE_STRING       "Pololu USB-to-I2C Adapter Port"
+
 
 //--------------------------------------------------------------------+
 // Board Specific Configuration
@@ -106,12 +111,3 @@
 
 // MSC Buffer size of Device Mass storage
 #define CFG_TUD_MSC_EP_BUFSIZE   512
-
-// TODO: set the vendor ID, product ID, bcdRevision, and strings properly
-// TODO: decide if we want a native USB interface, and make that work (including MS OS 2.0 descriptors)
-
-#ifdef __cplusplus
- }
-#endif
-
-#endif /* _TUSB_CONFIG_H_ */

@@ -26,44 +26,25 @@
 #include <tusb.h>
 #include <stm32c071xx.h>
 
-/* A combination of interfaces must have a unique product id, since PC will save device driver after the first plug.
- * Same VID/PID with different interface e.g MSC (first), then CDC (later) will possibly cause system error on PC.
- *
- * Auto ProductID layout's Bitmap:
- *   [MSB]         HID | MSC | CDC          [LSB]
- */
-#define _PID_MAP(itf, n)  ( (CFG_TUD_##itf) << (n) )
-#define USB_PID           (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
-                           _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) )
+#if USB_VENDOR_ID == 0x1FFB && USB_PRODUCT_ID != 0x2502
+#error Only Pololu Corporation can assign new product IDs for the Pololu Vendor ID.
+#endif
 
-#define USB_VID   0xCafe
-#define USB_BCD   0x0200
-// TODO: should use real USB VID/PID here
-
-// USB device descriptor
 const tusb_desc_device_t desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
-    .bcdUSB             = USB_BCD,
-
-    // TODO: change this to be a non-composite device, right?
-    // Use Interface Association Descriptor (IAD) for CDC
-    // As required by USB Specs IAD's subclass must be common class (2) and protocol must be IAD (1)
-    .bDeviceClass       = TUSB_CLASS_MISC,
-    .bDeviceSubClass    = MISC_SUBCLASS_COMMON,
-    .bDeviceProtocol    = MISC_PROTOCOL_IAD,
-
+    .bcdUSB             = 0x0200,
+    .bDeviceClass       = TUSB_CLASS_CDC,
+    .bDeviceSubClass    = 0,
+    .bDeviceProtocol    = 0,
     .bMaxPacketSize0    = CFG_TUD_ENDPOINT0_SIZE,
-
-    .idVendor           = USB_VID,
-    .idProduct          = USB_PID,
-    .bcdDevice          = 0x0100,
-
-    .iManufacturer      = 0x01,
-    .iProduct           = 0x02,
-    .iSerialNumber      = 0x03,
-
-    .bNumConfigurations = 0x01
+    .idVendor           = USB_VENDOR_ID,
+    .idProduct          = USB_PRODUCT_ID,
+    .bcdDevice          = USB_FIRMWARE_VERSION,
+    .iManufacturer      = 1,
+    .iProduct           = 2,
+    .iSerialNumber      = 3,
+    .bNumConfigurations = 1
 };
 
 // Invoked when received GET DEVICE DESCRIPTOR
@@ -122,25 +103,14 @@ enum {
 // array of pointer to string descriptors
 static char const * usb_strings[] = {
     NULL,                          // 0: Language is hardcoded
-    "TinyUSB",                     // 1: Manufacturer
-    "TinyUSB Device",              // 2: Product
+    USB_VENDOR_STRING,             // 1: Manufacturer
+    USB_PRODUCT_STRING,            // 2: Product
     NULL,                          // 3: Serial number is handled specially
-    "TinyUSB CDC",                 // 4: CDC Interface
+    USB_CDC_INTERFACE_STRING,      // 4: CDC Interface
 };
 
 #define USB_STRING_MAX_LENGTH 64
 static uint16_t usb_string_desc[USB_STRING_MAX_LENGTH + 1];
-
-size_t board_get_unique_id(uint8_t id[], size_t max_len)
-{
-  (void)max_len;
-  volatile uint32_t * stm32_uuid = (volatile uint32_t *)UID_BASE;
-  uint32_t * id32 = (uint32_t *)(uintptr_t)id;
-  id32[0] = stm32_uuid[0];
-  id32[1] = stm32_uuid[1];
-  id32[2] = stm32_uuid[2];
-  return 12;
-}
 
 static const char nibble_to_hex[16] = {
   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
@@ -148,7 +118,7 @@ static const char nibble_to_hex[16] = {
 
 const uint16_t * tud_descriptor_string_cb(uint8_t index, uint16_t langid)
 {
-  (void) langid;
+  (void)langid;
   size_t length;
 
   switch (index) {
