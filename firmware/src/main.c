@@ -31,16 +31,11 @@
 //  TODO: if the last command resulted in an I2C error, and we're not currently using I2C,
 //        the red LED should blink slowly.  But
 //        0-byte writes that result in a NACK is not considered an error.
-//  TODO: remove the '.' required at the end of the command
 //  TODO: if we're not having a native USB interface, need some other way to start the bootloader
 //  TODO: (Kevin) make sure this works with that Allegro chip which had odd timing requirements
 //  TODO: (some day) to support multi-master systems, we would want to have a way to do
 //    repeated starts, and a way to automatically retry a few times when we the arbitration is lost.
 //
-// Interrupts:
-//   Priority 1: USB (needs to be handled in a few microseconds)
-//   Priority 2: SysTick
-//   Priority 3: USART2 (debug_uart)
 // Pins when running on usb08a/usb08b:
 //   PB0/GREEN_LED
 //   PA7/YELLOW_LED
@@ -821,6 +816,17 @@ static void reset_serial_port_state()
   tx_byte_count = 0;
 }
 
+// When the USB Host sends "Send Break" request with a non
+void tud_cdc_send_break_cb(uint8_t itf, uint16_t duration_ms)
+{
+  (void)itf;
+  if (duration_ms)
+  {
+    reset_serial_port_state();
+  }
+}
+
+
 static void rx_service()
 {
   if (!tud_mounted())
@@ -921,18 +927,5 @@ int main()
 //  {
 //    start_bootloader_soon = 1;
 //    usb_control_ack();
-//  }
-//}
-
-// TODO: figure out how to handle Send Break requests with TinyUSB
-//void usb_cdc_break_handler(size_t cdc_index, uint16_t duration)
-//{
-//  (void)cdc_index;
-//  if (duration)
-//  {
-//    // We received a Send Break command, so reset the state of our virtual
-//    // serial port.  This means users can send a break when they want to be
-//    // sure their next byte will be interpreted as the start of a command.
-//    reset_serial_port_state();
 //  }
 //}

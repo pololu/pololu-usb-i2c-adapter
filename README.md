@@ -4,13 +4,15 @@
 
 ## Building the firmware with STM32CubeIDE
 
-TODO: instructions about getting the IDE
-
-Also, update to the latest version using '''Help > Check for updates'''.
+Download the [STM32CubeIDE] software from ST's website and install it.
+Also, update to the latest version using '''Help > Check for Updates'''.
 
 The IDE does not automatically detect projects in the workspace.  To open those
 projects and build them, you have first go to File > Import... >
 Existing Projects into Workspace.
+
+[STM32CubeIDE]: https://www.st.com/en/development-tools/stm32cubeide.html
+
 
 ### Configuring the code style in STM32CubeIDE
 
