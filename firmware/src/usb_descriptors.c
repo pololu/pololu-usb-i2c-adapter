@@ -40,7 +40,7 @@ const tusb_desc_device_t desc_device = {
     .bMaxPacketSize0    = CFG_TUD_ENDPOINT0_SIZE,
     .idVendor           = USB_VENDOR_ID,
     .idProduct          = USB_PRODUCT_ID,
-    .bcdDevice          = USB_FIRMWARE_VERSION,
+    .bcdDevice          = FIRMWARE_VERSION_BCD,
     .iManufacturer      = 1,
     .iProduct           = 2,
     .iSerialNumber      = 3,
@@ -107,6 +107,7 @@ static char const * usb_strings[] = {
     USB_PRODUCT_STRING,            // 2: Product
     NULL,                          // 3: Serial number is handled specially
     USB_CDC_INTERFACE_STRING,      // 4: CDC Interface
+    FIRMWARE_MODIFICATION_STR,     // 5: Firmware modification string
 };
 
 #define USB_STRING_MAX_LENGTH 64

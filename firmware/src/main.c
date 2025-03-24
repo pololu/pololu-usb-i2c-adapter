@@ -681,23 +681,21 @@ static void execute_get_device_info()
 {
   struct __attribute__((packed)) DeviceInfo {
     uint8_t size;
-    uint8_t reserved_byte;
+    uint8_t info_version;
     uint16_t vendor_id;
     uint16_t product_id;
     uint16_t firmware_version;
-    uint8_t reserved[8];  // good place to put info about special modified firmware
-    uint16_t serial_number[6];
+    char firmware_modification[8];
+    uint8_t serial_number[12];
   } info = {
       .size = sizeof(struct DeviceInfo),
-      .vendor_id = 0,  // TODO
-      .product_id = 0,  // TODO
-      .firmware_version = 0,  // TODO
+      .info_version = 0,
+      .vendor_id = USB_VENDOR_ID,
+      .product_id = USB_PRODUCT_ID,
+      .firmware_modification = FIRMWARE_MODIFICATION_STR,
+      .firmware_version = FIRMWARE_VERSION_BCD,
   };
-
-  for (size_t i = 0; i < 6; i++)
-  {
-    info.serial_number[i] = ((volatile uint16_t *)UID_BASE)[i];
-  }
+  memcpy(info.serial_number, (void *)UID_BASE, 12);
 
   send_data(sizeof(info), (uint8_t *)&info);
 }
