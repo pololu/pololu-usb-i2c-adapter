@@ -95,7 +95,6 @@
 #define RX_STATE_GET_ADDRESS 1
 #define RX_STATE_GET_LENGTH 2
 #define RX_STATE_GET_DATA 3
-#define RX_STATE_GET_END_MARKER 4
 
 #define MAX_RESPONSE_SIZE (1+255)
 
@@ -700,6 +699,50 @@ static void execute_get_device_info()
   send_data(sizeof(info), (uint8_t *)&info);
 }
 
+static void execute_command()
+{
+  switch (command)
+  {
+  case CMD_WRITE:
+    execute_write();
+    break;
+  case CMD_READ:
+    execute_read();
+    break;
+  case CMD_SET_I2C_MODE:
+    execute_set_i2c_mode();
+    break;
+  case CMD_SET_I2C_TIMEOUT:
+    execute_set_i2c_timeout();
+    break;
+  case CMD_SET_STM32_TIMING:
+    execute_set_stm32_timing();
+    break;
+  case CMD_SET_REGULATOR:
+    execute_set_regulator();
+    break;
+  case CMD_DIGITAL_READ:
+    execute_digital_read();
+    break;
+  case CMD_GET_DEVICE_INFO:
+    execute_get_device_info();
+    break;
+  }
+
+  if (I2C1->ISR & I2C_ISR_BUSY)
+  {
+    // There was a timeout (or a buggy command that didn't wait for the I2C
+    // transaction to finish before returning).  Reinitialize the I2C module
+    // so that the data the user was trying to transfer doesn't randomly get
+    // transferred later when the condition causing the timeout is fixed
+    // (e.g. when SDA stops being shorted to VDD).
+    i2c_init();
+  }
+  assert(!(I2C1->ISR & I2C_ISR_BUSY));
+
+  quick_tasks();
+}
+
 static void prepare_to_receive_data(size_t length)
 {
   command_data_length = length;
@@ -733,10 +776,8 @@ static void handle_rx_byte(uint8_t byte)
       prepare_to_receive_data(sizeof(timing));
       break;
     case CMD_DIGITAL_READ:
-      execute_digital_read();
-      break;
     case CMD_GET_DEVICE_INFO:
-      execute_get_device_info();
+      execute_command();
       break;
     }
     break;
@@ -753,7 +794,8 @@ static void handle_rx_byte(uint8_t byte)
     }
     else
     {
-      rx_state = RX_STATE_GET_END_MARKER;
+      execute_command();
+      rx_state = RX_STATE_IDLE;
     }
     break;
   case RX_STATE_GET_DATA:
@@ -762,47 +804,9 @@ static void handle_rx_byte(uint8_t byte)
     command_data[command_data_received++] = byte;
     if (command_data_received >= command_data_length)
     {
-      rx_state = RX_STATE_GET_END_MARKER;
+      execute_command();
+      rx_state = RX_STATE_IDLE;
     }
-    break;
-  case RX_STATE_GET_END_MARKER:
-    if (byte == '.')
-    {
-      switch (command)
-      {
-      case CMD_WRITE:
-        execute_write();
-        break;
-      case CMD_READ:
-        execute_read();
-        break;
-      case CMD_SET_I2C_MODE:
-        execute_set_i2c_mode();
-        break;
-      case CMD_SET_I2C_TIMEOUT:
-        execute_set_i2c_timeout();
-        break;
-      case CMD_SET_STM32_TIMING:
-        execute_set_stm32_timing();
-        break;
-      case CMD_SET_REGULATOR:
-        execute_set_regulator();
-        break;
-      }
-
-      if (I2C1->ISR & I2C_ISR_BUSY)
-      {
-        // There was a timeout (or a buggy command that didn't wait for the I2C
-        // transaction to finish before returning).  Reinitialize the I2C module
-        // so that the data the user was trying to transfer doesn't randomly get
-        // transferred later when the condition causing the timeout is fixed
-        // (e.g. when SDA stops being shorted to VDD).
-        i2c_init();
-      }
-      assert(!(I2C1->ISR & I2C_ISR_BUSY));
-      quick_tasks();
-    }
-    rx_state = RX_STATE_IDLE;
     break;
   }
 }
@@ -831,7 +835,7 @@ static void rx_service()
     rx_byte_count = tud_cdc_read(rx_buffer, sizeof(rx_buffer));
     rx_index = 0;
   }
-  while (rx_index < rx_byte_count && sizeof(tx_buffer) - tx_byte_count >= MAX_RESPONSE_SIZE)
+  while (rx_index < rx_byte_count && tx_byte_count <= sizeof(tx_buffer) - MAX_RESPONSE_SIZE)
   {
     uint8_t byte_received = rx_buffer[rx_index++];
     handle_rx_byte(byte_received);
