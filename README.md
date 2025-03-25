@@ -20,6 +20,15 @@ Existing Projects into Workspace.
 [STM32CubeIDE]: https://www.st.com/en/development-tools/stm32cubeide.html
 
 
+## Building the firmware with Bash and GCC
+
+If you have the Bash shell and arm-none-eabi-gcc installed on your PATH, you
+can build the firmware by running the `build.sh` script in the
+`firmware` directory.  By default, it builds in release mode.  You can
+specify what configuration to build by providing an argument to the script,
+which should be `release` or `debug`.
+
+
 ### Configuring the code style in STM32CubeIDE
 
 Go to Window > Preferences > C/C++ > Code Style > Formatter.  Select
