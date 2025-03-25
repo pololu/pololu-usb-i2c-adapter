@@ -28,12 +28,6 @@
 // a stop condition, and 9 times for each byte written or read from the
 // target.  For a NACK error, the bit number is 1 + 9 * N for some N > 0.
 //
-//  TODO: if the last command resulted in an I2C error, and we're not currently using I2C,
-//        the red LED should blink slowly.  But
-//        0-byte writes that result in a NACK is not considered an error.
-//  TODO: (some day) to support multi-master systems, we would want to have a way to do
-//    repeated starts, and a way to automatically retry a few times when we the arbitration is lost.
-//
 // Pins when running on usb08a/usb08b:
 //   PB0/GREEN_LED
 //   PA7/YELLOW_LED
@@ -135,6 +129,8 @@ bool usb_blink_active;
 uint8_t usb_blink_start;
 
 //// Red/yellow LED variables
+bool rw_error;
+uint32_t rw_error_start_time;
 uint32_t write_events;
 uint32_t read_events;
 uint32_t rw_last_time_no_events;
@@ -301,6 +297,11 @@ static void led_rw_service()
     {
       rw_blink_active = 0;
     }
+  }
+  else if (rw_error)
+  {
+    led_yellow(0);
+    led_red((uint32_t)(time_ms - rw_error_start_time + 256) & 512);
   }
   else
   {
@@ -612,9 +613,12 @@ static void send_zeros(size_t count)
 
 static void execute_write()
 {
+  rw_error = 0;
   i2c_timeout_start();
   uint8_t error = i2c_write(i2c_address, command_data_length, command_data);
   send_byte(error);
+  rw_error = error && command_data_length;
+  rw_error_start_time = time_ms;
 }
 
 static void execute_read()
@@ -627,11 +631,13 @@ static void execute_read()
     return;
   }
 
+  rw_error = 0;
   i2c_timeout_start();
   uint8_t error = i2c_read(i2c_address, command_data_length, tx_buffer + tx_byte_count + 1);
-
   send_byte(error);
   tx_byte_count += command_data_length;
+  rw_error = (bool)error;
+  rw_error_start_time = time_ms;
 }
 
 static void execute_set_i2c_mode()
