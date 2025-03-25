@@ -224,10 +224,6 @@ static void led_usb_service()
     // 50% duty cycle blink once per second
     led_green(time_ms >> 9 & 1);
 
-	// TODO: we should have distinct green LED blinking for:
-	// - no USB power (state == detached)
-	// - no USB communication (state == attached)
-
     usb_blink_active = 0;
     usb_activity_flag = 0;
   }
