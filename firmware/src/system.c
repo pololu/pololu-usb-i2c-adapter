@@ -5,20 +5,11 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-//#include <debug_uart.h>
-//#include <stdio.h>
-
 #define USB USB_DRD_FS
 
 volatile uint32_t time_ms;
 
 volatile uint8_t do_not_sleep;
-
-#ifdef DEBUG_UART_H
-#define DEBUG_WRITE(count, msg) (debug_uart_tx_write((count), (msg)))
-#else
-#define DEBUG_WRITE(count, msg)
-#endif
 
 void SysTick_Handler()  // ISR, priority 2
 {
@@ -227,10 +218,6 @@ void sleep_service()
 
 void deep_sleep()
 {
-#ifdef DEBUG_UART_H
-  printf("%lu STOP\n", time_ms);
-#endif
-
   assert(PWR->CR1 == 0);
 
   // Select deep sleep mode instead of sleep mode.
@@ -270,10 +257,6 @@ void deep_sleep()
   // Disable the SysTick interrupt.  Should be done before __disable_irq
   // so that pending interrupts get handled.
   SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
-
-#ifdef DEBUG_UART_H
-  debug_uart_tx_flush();
-#endif
 
   __disable_irq();
 
@@ -315,10 +298,6 @@ void deep_sleep()
 
   system_clocks_init();
 
-#ifdef DEBUG_UART_H
-  uint32_t icsr = SCB->ICSR;
-  printf("%lu DONE time=%lu ICSR=0x%lx\n", time_ms, sleep_time, icsr);
-#endif
   __enable_irq();
 
   // Re-enable the SysTick interrupt.

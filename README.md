@@ -2,6 +2,7 @@
 
 [www.pololu.com](https://www.pololu.com/)
 
+
 ## Building the firmware with STM32CubeIDE
 
 Download the [STM32CubeIDE] software from ST's website and install it.
@@ -18,6 +19,7 @@ Existing Projects into Workspace.
 
 [STM32CubeIDE]: https://www.st.com/en/development-tools/stm32cubeide.html
 
+
 ### Configuring the code style in STM32CubeIDE
 
 Go to Window > Preferences > C/C++ > Code Style > Formatter.  Select
@@ -28,16 +30,16 @@ indentation size to 2.  Set the Profile name to "Pololu" and click OK.
 Now you can use the "Correct Indentation" or "Format" commands in the "Source"
 menu on your code.
 
-## Building the firmware with Bash and GCC
-
-TODO
-
-## Uploading firmware to your device
-
-TODO
-
-## Updating third-party libraries
-
-TODO
 
 
+## Third-party libraries
+
+This firmware includes code from the following third-party libraries:
+
+- [TinyUSB]
+- [cmsis-device-c0]
+- [STM32CubeC0]
+
+[TinyUSB]: https://github.com/STMicroelectronics/cmsis-device-c0
+[cmsis-device-c0]: https://github.com/STMicroelectronics/cmsis-device-c0
+[STM32CubeC0]: https://github.com/STMicroelectronics/STM32CubeC0

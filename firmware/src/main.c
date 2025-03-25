@@ -1,3 +1,5 @@
+// Copyright Pololu Corporation.  For more information, see http://www.pololu.com/
+
 // USB-to-I2C adapter firmware
 //
 //  I2C Write command format:
