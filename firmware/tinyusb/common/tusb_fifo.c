@@ -26,7 +26,7 @@
  */
 
 #include "osal/osal.h"
-#include <common/tusb_fifo.h>
+#include "tusb_fifo.h"
 
 #define TU_FIFO_DBG   0
 
