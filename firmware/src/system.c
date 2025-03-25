@@ -4,6 +4,7 @@
 #include <stm32c0xx.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <assert.h>
 
 #define USB USB_DRD_FS
 
@@ -375,4 +376,10 @@ int __attribute__((weak)) _kill(int pid, int sig)
   (void)sig;
   errno = EINVAL;
   return -1;
+}
+
+void __attribute__((weak)) _exit(int status)
+{
+  (void)status;
+  while (1) {}
 }

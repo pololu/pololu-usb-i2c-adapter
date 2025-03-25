@@ -1,5 +1,7 @@
-/.metadata
+.metadata
 Debug
 Release
 *.Launch
 *.cfg
+build_debug
+build_release
