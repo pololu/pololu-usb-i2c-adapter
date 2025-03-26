@@ -40,7 +40,6 @@ Now you can use the "Correct Indentation" or "Format" commands in the "Source"
 menu on your code.
 
 
-
 ## Third-party libraries
 
 This firmware includes code from the following third-party libraries:

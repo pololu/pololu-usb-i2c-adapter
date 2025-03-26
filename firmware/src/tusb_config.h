@@ -31,9 +31,8 @@
 #define FIRMWARE_MODIFICATION_STR      "-"
 
 #define USB_VENDOR_STRING              "Pololu Corporation"
-#define USB_PRODUCT_STRING             "Pololu USB-to-I2C Adapter"
-#define USB_NATIVE_INTERFACE_STRING    "Pololu USB-to-I2C Adapter"
-#define USB_CDC_INTERFACE_STRING       "Pololu USB-to-I2C Adapter Port"
+#define USB_PRODUCT_STRING             "Pololu Isolated USB-to-I2C Adapter"
+#define USB_CDC_INTERFACE_STRING       "Pololu Isolated USB-to-I2C Adapter"
 
 
 //--------------------------------------------------------------------+

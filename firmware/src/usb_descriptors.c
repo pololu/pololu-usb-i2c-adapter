@@ -92,14 +92,6 @@ uint8_t const *tud_descriptor_configuration_cb(uint8_t index) {
 // String Descriptors
 //--------------------------------------------------------------------+
 
-// String Descriptor Index
-enum {
-  STRID_LANGID = 0,
-  STRID_MANUFACTURER,
-  STRID_PRODUCT,
-  STRID_SERIAL,
-};
-
 // array of pointer to string descriptors
 static char const * usb_strings[] = {
     NULL,                          // 0: Language is hardcoded
@@ -123,12 +115,12 @@ const uint16_t * tud_descriptor_string_cb(uint8_t index, uint16_t langid)
   size_t length;
 
   switch (index) {
-  case STRID_LANGID:
+  case 0:  // Language
     usb_string_desc[1] = 0x409;
     length = 1;
     break;
 
-  case STRID_SERIAL:
+  case 3:  // Serial number
     for (size_t offset = 0; offset < 6; offset++)
     {
       uint16_t v = *(volatile uint16_t *)(UID_BASE + offset * 2);
