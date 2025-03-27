@@ -328,21 +328,8 @@ static void regulator_service()
   gpio_write(REG_EN_PIN, enable);
 }
 
-// We call gpio_get_mode to check if the BOOT0 pin is actually being
-// used as an input, because we might be using it as SWCLK to debug
-// the system.
 static void start_bootloader_service()
 {
-  static uint16_t last_time_boot0_low = 0;
-  if (gpio_get_mode(BOOT0_PIN) != GPIO_INPUT || !gpio_read(BOOT0_PIN))
-  {
-    last_time_boot0_low = time_ms;
-  }
-  else if ((uint16_t)(time_ms - last_time_boot0_low) > 20)
-  {
-    start_bootloader_soon = 1;
-  }
-
   if (start_bootloader_soon)
   {
     system_deinit();
