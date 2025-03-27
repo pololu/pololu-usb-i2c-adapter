@@ -152,9 +152,6 @@ void USB_IRQHandler()
   usb_activity_flag = 1;
 }
 
-// stm32c071xx.s from cmsis_device_c0 uses a different ISR name.
-void USB_DRD_FS_IRQHandler() __attribute__((alias("USB_IRQHandler")));
-
 static void leds_init()
 {
   gpio_config(LED_GREEN_PIN, GPIO_OUTPUT);
@@ -308,19 +305,19 @@ static void led_rw_service()
   }
 }
 
-static void check_option_bits()
+// Our desired option bytes are the defaults, except for:
+// NBOOT_SEL=0 NRST_MODE=1 BORF_LEV=2 BORR_LEV=2 BOR_EN=1
+static void check_option_bytes()
 {
-  // Some early usb08a/b devices were programmed with NRST_MODE=11
-  // (the default) instead of NRST_MODE=01 which is a better choice
-  // in general, so we just mask off NRST_MODE[1].
-  if ((FLASH->OPTR & ~0x10000000) != 0x2EEFFEAA)
+  if (FLASH->OPTR != 0x2EEFF5AA)
   {
     while(1)
     {
       led_red(1);
-      delay_ms(100);
+      delay_ms(133);
       led_red(0);
       delay_ms(200);
+      iwdg_clear();
     }
   }
 }
@@ -912,7 +909,7 @@ int main()
   gpio_config(BOOT0_PIN, GPIO_INPUT_PULLED_DOWN);
 #endif
   leds_init();
-  check_option_bits();
+  check_option_bytes();
   RCC->APBENR1 |= RCC_APBENR1_USBEN;
   tud_init(0);
   i2c_init();
