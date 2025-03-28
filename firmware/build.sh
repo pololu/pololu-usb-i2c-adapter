@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# This bash script builds the firmware with arm-none-eabi-gcc.
+
 # Usage: ./build.sh [release|debug]
 
 set -ue
