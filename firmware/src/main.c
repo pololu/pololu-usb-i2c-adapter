@@ -43,10 +43,10 @@
 //   PB8/I2C1_SCL
 //   PB9/I2C1_SDA
 // Pins when running on any board:
-//   PA0/A0/DEBUG0         - debug output 0
-//   PA2/USART2_TX/CN10_18 - serial debug output
 //   PA4/REG_EN_PIN
-//   PA14/SWCLK/BOOT0
+
+// TODO: reconsider timing parameters
+// TODO: try to detect board type at runtime
 
 #include "system.h"
 #include "protocol.h"
@@ -74,11 +74,6 @@
 #endif
 
 #define REG_EN_PIN PA4
-#define BOOT0_PIN PA14
-
-#ifdef DEBUG
-#define DEBUG0 PA0
-#endif
 
 #define RX_STATE_IDLE 0
 #define RX_STATE_GET_ADDRESS 1
@@ -106,7 +101,7 @@ uint8_t command_data[256];
 size_t command_data_received;
 
 uint32_t i2c_timeout_base;
-uint32_t i2c_timeout_ms = 20;
+uint32_t i2c_timeout_ms = 50;
 
 bool regulator_user_enable = 1;
 
@@ -820,9 +815,19 @@ void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts)
   (void)itf; (void)rts;
   cdc_line_coding_t coding;
   tud_cdc_n_get_line_coding(0, &coding);
+
+  // Start the bootloader when the serial port is closed
+  // while the baud rate is 600.
   if (coding.bit_rate == 600 && dtr == 0)
   {
     start_bootloader_soon = 1;
+  }
+
+  // Forget the state of the commands whenever the serial port
+  // is closed.
+  if (dtr == 0)
+  {
+    reset_serial_port_state();
   }
 }
 
@@ -889,12 +894,6 @@ int main()
 {
   system_init();
   iwdg_init();
-#ifdef DEBUG
-  gpio_config(DEBUG0, GPIO_OUTPUT);
-  gpio_write(DEBUG0, 0);
-#else
-  gpio_config(BOOT0_PIN, GPIO_INPUT_PULLED_DOWN);
-#endif
   leds_init();
   check_option_bytes();
   RCC->APBENR1 |= RCC_APBENR1_USBEN;
@@ -902,7 +901,7 @@ int main()
   i2c_init();
 
   gpio_config(REG_EN_PIN, GPIO_OUTPUT);
-  gpio_write(REG_EN_PIN, 1); // tmphax
+  gpio_write(REG_EN_PIN, 1);
 
   while (1)
   {
