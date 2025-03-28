@@ -301,10 +301,10 @@ static void led_rw_service()
 }
 
 // Our desired option bytes are the defaults, except for:
-// NBOOT_SEL=0 NRST_MODE=1 BORF_LEV=2 BORR_LEV=2 BOR_EN=1
+// NBOOT_SEL=0 NRST_MODE=1 BORF_LEV=1 BORR_LEV=1 BOR_EN=1
 static void check_option_bytes()
 {
-  if (FLASH->OPTR != 0x2EEFF5AA)
+  if (FLASH->OPTR != 0x2EEFEBAA)
   {
     while(1)
     {
