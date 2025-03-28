@@ -159,7 +159,7 @@ static inline void gpio_config_mode(uint32_t pin, uint32_t mode)
 }
 
 // Returns GPIO_INPUT, GPIO_OUTPUT, GPIO_ALT_FUNC, or GPIO_ANALOG.
-static uint8_t gpio_get_mode(uint32_t pin)
+static inline uint8_t gpio_get_mode(uint32_t pin)
 {
   _DECODE_PIN();
   return port->MODER >> y >> y & 3;
