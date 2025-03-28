@@ -111,6 +111,9 @@ typedef struct __attribute__((packed)) Stm32Timing
   uint8_t gpio_fmp_mode;
 } Stm32Timing;
 
+// These are the TIMINGR values that the STM32CubeIDE generates with these
+// settings: rise time = 100 ns, fall time = 100 ns, digital filter = 0,
+// analog filter enabled.
 const Stm32Timing i2c_modes[] = {
   { 0x10805D88, 0 }, // 0 = Standard mode (100 kHz)
   { 0x0090194B, 0 }, // 1 = Fast mode (400 kHz)
@@ -900,6 +903,7 @@ int main()
   tud_init(0);
   i2c_init();
 
+  // Turn on the regulator.
   gpio_config(REG_EN_PIN, GPIO_OUTPUT);
   gpio_write(REG_EN_PIN, 1);
 
