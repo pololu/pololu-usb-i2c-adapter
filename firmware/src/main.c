@@ -45,9 +45,6 @@
 // Pins when running on any board:
 //   PA4/REG_EN_PIN
 
-// TODO: reconsider timing parameters
-// TODO: try to detect board type at runtime
-
 #include "system.h"
 #include "protocol.h"
 #include <tusb.h>
@@ -81,6 +78,8 @@
 #define RX_STATE_GET_DATA 3
 
 #define MAX_RESPONSE_SIZE (1+255)
+
+bool board_has_output_regulator;
 
 bool start_bootloader_soon;
 
@@ -148,6 +147,48 @@ void USB_IRQHandler()
   tud_int_handler(0);
   do_not_sleep = 1;
   usb_activity_flag = 1;
+}
+
+static void adc_init()
+{
+  RCC->APBENR2 |= RCC_APBENR2_ADCEN;
+
+  ADC1->CFGR1 = 0;
+
+  // Set the ADC clock to PCLK/4 = 12 MHz, and
+  // set the sample time to 79.5 cycles (6.6 us).
+  ADC1->CFGR2 = ADC_CFGR2_CKMODE_1;
+  ADC1->SMPR = 6;
+
+  // Turn on the ADC voltage regulator.
+  ADC1->CR = ADC_CR_ADVREGEN;
+  delay_us(25);
+
+  // Perform calibration.
+  ADC1->CR = ADC_CR_ADVREGEN | ADC_CR_ADCAL;
+  while (ADC1->CR & ADC_CR_ADCAL);
+
+  // Enable the ADC.
+  ADC1->CR = ADC_CR_ADVREGEN | ADC_CR_ADEN;
+  while ((ADC1->ISR & ADC_ISR_ADRDY) == 0);
+}
+
+static uint16_t analog_read(uint32_t channel)
+{
+  // Clear CCRDY and EOC.
+  ADC1->ISR = ADC_ISR_CCRDY | ADC_ISR_EOC;
+
+  // Select the channel
+  ADC1->CHSELR = 1 << channel;
+  while (!(ADC1->ISR & ADC_ISR_CCRDY));
+
+  // Start conversion
+  ADC1->CR |= ADC_CR_ADSTART;
+
+  // Wait for conversion to complete
+  while (!(ADC1->ISR & ADC_ISR_EOC));
+
+  return ADC1->DR;
 }
 
 static void leds_init()
@@ -307,6 +348,7 @@ static void led_rw_service()
 // NBOOT_SEL=0 NRST_MODE=1 BORF_LEV=1 BORR_LEV=1 BOR_EN=1
 static void check_option_bytes()
 {
+#ifndef USE_NUCLEO_64
   if (FLASH->OPTR != 0x2EEFEBAA)
   {
     while(1)
@@ -318,6 +360,27 @@ static void check_option_bytes()
       iwdg_clear();
     }
   }
+#endif
+}
+
+struct __attribute__((packed)) DebugData
+{
+  uint16_t startup_en_reading;
+} debug_data;
+
+static void determine_board()
+{
+  gpio_config(REG_EN_PIN, GPIO_INPUT_PULLED_UP);
+  delay_us(25);
+
+  uint16_t reading = analog_read(4);  // PA4/ADC_IN4/REG_EN
+  debug_data.startup_en_reading = reading;
+
+  // If this is a board that can supply power with an output regulator, then
+  // the EN pin is pulled down with a 100k resistor on the board, and when
+  // we pull it up with the STM32 we should get a reading of at most:
+  // values: 100/(100+25)*4096 = 3276.
+  board_has_output_regulator = reading < 3700;
 }
 
 static void regulator_service()
@@ -678,6 +741,12 @@ static void execute_get_device_info()
   send_data(sizeof(info), (uint8_t *)&info);
 }
 
+static void execute_get_debug_data()
+{
+  send_byte(sizeof(debug_data));
+  send_data(sizeof(debug_data), (void *)&debug_data);
+}
+
 static void execute_command()
 {
   switch (command)
@@ -705,6 +774,9 @@ static void execute_command()
     break;
   case CMD_GET_DEVICE_INFO:
     execute_get_device_info();
+    break;
+  case CMD_GET_DEBUG_DATA:
+    execute_get_debug_data();
     break;
   }
 
@@ -756,6 +828,7 @@ static void handle_rx_byte(uint8_t byte)
       break;
     case CMD_DIGITAL_READ:
     case CMD_GET_DEVICE_INFO:
+    case CMD_GET_DEBUG_DATA:
       execute_command();
       break;
     }
@@ -898,14 +971,14 @@ int main()
   system_init();
   iwdg_init();
   leds_init();
+  adc_init();
   check_option_bytes();
+  determine_board();
   RCC->APBENR1 |= RCC_APBENR1_USBEN;
   tud_init(0);
   i2c_init();
 
-  // Turn on the regulator.
   gpio_config(REG_EN_PIN, GPIO_OUTPUT);
-  gpio_write(REG_EN_PIN, 1);
 
   while (1)
   {

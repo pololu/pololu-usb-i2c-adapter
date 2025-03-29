@@ -29,8 +29,6 @@
 #define GPIO_ALT_FUNC_OPEN_DRAIN_PULLED_UP   0b01110 // not sure this mode actually works
 #define GPIO_ALT_FUNC_OPEN_DRAIN_PULLED_DOWN 0b10110 // not sure this mode actually works
 #define GPIO_ANALOG                          0b00011
-#define GPIO_ANALOG_PULLED_UP                0b01011
-#define GPIO_ANALOG_PULLED_DOWN              0b10011
 
 #define LOW    0
 #define HIGH   1
