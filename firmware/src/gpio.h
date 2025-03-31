@@ -22,12 +22,12 @@
 #define GPIO_INPUT_PULLED_DOWN               0b10000
 #define GPIO_OUTPUT                          0b00001
 #define GPIO_OUTPUT_OPEN_DRAIN               0b00101
-#define GPIO_OUTPUT_OPEN_DRAIN_PULLED_UP     0b01101 // not sure this mode actually works
-#define GPIO_OUTPUT_OPEN_DRAIN_PULLED_DOWN   0b10101 // not sure this mode actually works
+#define GPIO_OUTPUT_OPEN_DRAIN_PULLED_UP     0b01101
+#define GPIO_OUTPUT_OPEN_DRAIN_PULLED_DOWN   0b10101
 #define GPIO_ALT_FUNC                        0b00010
 #define GPIO_ALT_FUNC_OPEN_DRAIN             0b00110
-#define GPIO_ALT_FUNC_OPEN_DRAIN_PULLED_UP   0b01110 // not sure this mode actually works
-#define GPIO_ALT_FUNC_OPEN_DRAIN_PULLED_DOWN 0b10110 // not sure this mode actually works
+#define GPIO_ALT_FUNC_OPEN_DRAIN_PULLED_UP   0b01110
+#define GPIO_ALT_FUNC_OPEN_DRAIN_PULLED_DOWN 0b10110
 #define GPIO_ANALOG                          0b00011
 
 #define LOW    0

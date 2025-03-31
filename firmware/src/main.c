@@ -191,6 +191,27 @@ static uint16_t analog_read(uint32_t channel)
   return ADC1->DR;
 }
 
+// Set up unused pins to be pulled-down inputs so they are not floating,
+// as recommended by chapter 6 of AN4899.
+static void unused_pins_init()
+{
+  gpio_config(PA0, GPIO_INPUT_PULLED_DOWN);
+  gpio_config(PA1, GPIO_INPUT_PULLED_DOWN);
+  gpio_config(PA2, GPIO_INPUT_PULLED_DOWN);
+  gpio_config(PA3, GPIO_INPUT_PULLED_DOWN);
+  gpio_config(PA5, GPIO_INPUT_PULLED_DOWN);
+  gpio_config(PA8, GPIO_INPUT_PULLED_DOWN);
+  gpio_config(PA15, GPIO_INPUT_PULLED_DOWN);
+  gpio_config(PB1, GPIO_INPUT_PULLED_DOWN);
+  gpio_config(PB3, GPIO_INPUT_PULLED_DOWN);
+  gpio_config(PB4, GPIO_INPUT_PULLED_DOWN);
+  gpio_config(PB5, GPIO_INPUT_PULLED_DOWN);
+  gpio_config(PB6, GPIO_INPUT_PULLED_DOWN);
+  gpio_config(PC6, GPIO_INPUT_PULLED_DOWN);
+  gpio_config(PC14, GPIO_INPUT_PULLED_DOWN);
+  gpio_config(PC15, GPIO_INPUT_PULLED_DOWN);
+}
+
 static void leds_init()
 {
   gpio_config(LED_GREEN_PIN, GPIO_OUTPUT);
@@ -365,7 +386,13 @@ static void check_option_bytes()
 
 struct __attribute__((packed)) DebugData
 {
+  uint16_t porta;
+  uint16_t portb;
+  uint16_t portc;
+  uint16_t portf;
   uint16_t startup_en_reading;
+  uint16_t reference_factory_reading;
+  uint16_t reference_reading;
 } debug_data;
 
 static void determine_board()
@@ -379,7 +406,7 @@ static void determine_board()
   // If this is a board that can supply power with an output regulator, then
   // the EN pin is pulled down with a 100k resistor on the board, and when
   // we pull it up with the STM32 we should get a reading of at most:
-  // values: 100/(100+25)*4096 = 3276.
+  // values: 105/(105+25)*4096 = 3308.
   board_has_output_regulator = reading < 3700;
 }
 
@@ -743,6 +770,13 @@ static void execute_get_device_info()
 
 static void execute_get_debug_data()
 {
+  ADC1_COMMON->CCR |= ADC_CCR_VREFEN;
+  debug_data.porta = GPIOA->IDR;
+  debug_data.portb = GPIOB->IDR;
+  debug_data.portc = GPIOC->IDR;
+  debug_data.portf = GPIOF->IDR;
+  debug_data.reference_factory_reading = *(uint16_t *)0x1FFF756A;
+  debug_data.reference_reading = analog_read(10);  // Internal voltage reference
   send_byte(sizeof(debug_data));
   send_data(sizeof(debug_data), (void *)&debug_data);
 }
@@ -970,6 +1004,7 @@ int main()
 {
   system_init();
   iwdg_init();
+  unused_pins_init();
   leds_init();
   adc_init();
   check_option_bytes();
@@ -977,7 +1012,6 @@ int main()
   RCC->APBENR1 |= RCC_APBENR1_USBEN;
   tud_init(0);
   i2c_init();
-
   gpio_config(REG_EN_PIN, GPIO_OUTPUT);
 
   while (1)
