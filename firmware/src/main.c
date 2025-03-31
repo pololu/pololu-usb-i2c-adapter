@@ -503,7 +503,7 @@ static uint8_t i2c_check_bus()
 static uint8_t i2c_wait_for_flag(uint32_t mask)
 {
   uint32_t isr;
-  while ((I2C1->ISR & mask) == 0)
+  while (1)
   {
     isr = I2C1->ISR;
     if (isr & mask)
