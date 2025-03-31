@@ -141,6 +141,16 @@ uint32_t rw_blink_yellow_time;
 #define RW_EVENT_COLLECTION_TIME 16
 #define RW_MAX_BLINK 96
 
+struct __attribute__((packed)) DebugData
+{
+  uint16_t porta;
+  uint16_t portb;
+  uint16_t portc;
+  uint16_t portf;
+  uint16_t startup_en_reading;
+  uint16_t reference_factory_reading;
+  uint16_t reference_reading;
+} debug_data;
 
 void USB_IRQHandler()
 {
@@ -383,17 +393,6 @@ static void check_option_bytes()
   }
 #endif
 }
-
-struct __attribute__((packed)) DebugData
-{
-  uint16_t porta;
-  uint16_t portb;
-  uint16_t portc;
-  uint16_t portf;
-  uint16_t startup_en_reading;
-  uint16_t reference_factory_reading;
-  uint16_t reference_reading;
-} debug_data;
 
 static void determine_board()
 {
