@@ -81,3 +81,15 @@ This firmware includes code from the following third-party libraries:
 [TinyUSB]: https://github.com/STMicroelectronics/cmsis-device-c0
 [cmsis-device-c0]: https://github.com/STMicroelectronics/cmsis-device-c0
 [STM32CubeC0]: https://github.com/STMicroelectronics/STM32CubeC0
+
+
+## Drivers
+
+The `drivers` directory of this repository contains a USB driver
+for Windows enables it to recognize the adapter.  
+You can install the driver by right-clicking on `pololu-usb-to-i2c-adapter.inf`
+and selecting "Install".
+
+This driver is not needed on Windows 10 and later, but installing it
+allows you to see the correct product name in the Device Manager
+instead of "USB Serial Device".
