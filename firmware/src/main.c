@@ -407,6 +407,15 @@ static void determine_board()
   // we pull it up with the STM32 we should get a reading of at most:
   // values: 105/(105+25)*4096 = 3308.
   board_has_output_regulator = reading < 3700;
+
+  if (board_has_output_regulator)
+  {
+    set_usb_product_pololu_usb08b();
+  }
+  else
+  {
+    set_usb_product_pololu_usb08a();
+  }
 }
 
 static void regulator_service()
@@ -757,8 +766,8 @@ static void execute_get_device_info()
   } info = {
       .size = sizeof(struct DeviceInfo),
       .info_version = 0,
-      .vendor_id = USB_VENDOR_ID,
-      .product_id = USB_PRODUCT_ID,
+      .vendor_id = get_usb_vendor_id(),
+      .product_id = get_usb_product_id(),
       .firmware_modification = FIRMWARE_MODIFICATION_STR,
       .firmware_version = FIRMWARE_VERSION_BCD,
   };

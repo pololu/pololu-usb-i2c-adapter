@@ -25,14 +25,29 @@
 
 #pragma once
 
-#define USB_VENDOR_ID                  0x1FFB   // Pololu Corporation
-#define USB_PRODUCT_ID                 0x2502   // Pololu USB-to-I2C Adapter
+#include <stdint.h>
+
+// The main loop should call one of these when starting up after it has
+// detected the board.
+void set_usb_product_pololu_usb08a(void);
+void set_usb_product_pololu_usb08b(void);
+
+uint16_t get_usb_vendor_id(void);
+uint16_t get_usb_product_id(void);
+
 #define FIRMWARE_VERSION_BCD           0x100
 #define FIRMWARE_MODIFICATION_STR      "-"
 
-#define USB_VENDOR_STRING              "Pololu Corporation"
-#define USB_PRODUCT_STRING             "Pololu Isolated USB-to-I2C Adapter"
-#define USB_CDC_INTERFACE_STRING       "Pololu Isolated USB-to-I2C Adapter"
+// 0x1FFB is the Vendor ID assigned to Pololu Corporation by the USB
+// Implementers Forum (USB-IF).  Only Pololu can assign product IDs
+// for use with this vendor ID.
+#define USB_VENDOR_ID_POLOLU   0x1FFB
+#define USB_PRODUCT_ID_USB08A  0x2502
+#define USB_PRODUCT_ID_USB08B  0x2503
+
+#define USB_STRING_POLOLU      "Pololu Corporation"
+#define USB_STRING_USB08A      "Pololu Isolated USB-to-I2C Adapter"
+#define USB_STRING_USB08B      "Pololu Isolated USB-to-I2C Adapter with Isolated Power"
 
 
 //--------------------------------------------------------------------+
@@ -103,11 +118,11 @@
 #define CFG_TUD_VENDOR           0
 
 // CDC FIFO size of TX and RX
-#define CFG_TUD_CDC_RX_BUFSIZE   (TUD_OPT_HIGH_SPEED ? 512 : 64)
-#define CFG_TUD_CDC_TX_BUFSIZE   (TUD_OPT_HIGH_SPEED ? 512 : 64)
+#define CFG_TUD_CDC_RX_BUFSIZE   64
+#define CFG_TUD_CDC_TX_BUFSIZE   64
 
 // CDC Endpoint transfer buffer size, more is faster
-#define CFG_TUD_CDC_EP_BUFSIZE   (TUD_OPT_HIGH_SPEED ? 512 : 64)
+#define CFG_TUD_CDC_EP_BUFSIZE   64
 
 // MSC Buffer size of Device Mass storage
 #define CFG_TUD_MSC_EP_BUFSIZE   512

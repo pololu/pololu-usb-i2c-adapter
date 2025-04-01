@@ -1,36 +1,15 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2019 Ha Thach (tinyusb.org)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- */
-
 #include <tusb.h>
 #include <stm32c071xx.h>
 
-#if USB_VENDOR_ID == 0x1FFB && USB_PRODUCT_ID != 0x2502
-#error Only Pololu Corporation can assign new product IDs for the Pololu Vendor ID.
-#endif
+#define STRING_ID_MANUFACTURER    1
+#define STRING_ID_PRODUCT         2
+#define STRING_ID_SERIAL_NUMBER   3
+#define STRING_ID_CDC_PORT        4
+#define STRING_ID_FIRMWARE_MOD    5
 
-const tusb_desc_device_t desc_device = {
+// We don't set the Vendor ID or Product ID here:
+// the set_board_* functions set those.
+tusb_desc_device_t desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
     .bcdUSB             = 0x0200,
@@ -38,76 +17,75 @@ const tusb_desc_device_t desc_device = {
     .bDeviceSubClass    = 0,
     .bDeviceProtocol    = 0,
     .bMaxPacketSize0    = CFG_TUD_ENDPOINT0_SIZE,
-    .idVendor           = USB_VENDOR_ID,
-    .idProduct          = USB_PRODUCT_ID,
     .bcdDevice          = FIRMWARE_VERSION_BCD,
-    .iManufacturer      = 1,
-    .iProduct           = 2,
-    .iSerialNumber      = 3,
+    .iManufacturer      = STRING_ID_MANUFACTURER,
+    .iProduct           = STRING_ID_PRODUCT,
+    .iSerialNumber      = STRING_ID_SERIAL_NUMBER,
     .bNumConfigurations = 1
 };
 
-// Invoked when received GET DEVICE DESCRIPTOR
-// Application return pointer to descriptor
-uint8_t const *tud_descriptor_device_cb(void) {
-  return (uint8_t const *) &desc_device;
-}
-
-enum {
-  ITF_NUM_CDC = 0,
-  ITF_NUM_CDC_DATA,
-  ITF_NUM_TOTAL
+const char * usb_strings[] = {
+    [STRING_ID_FIRMWARE_MOD] = FIRMWARE_MODIFICATION_STR,
 };
 
-#define EPNUM_CDC_NOTIF   0x81
-#define EPNUM_CDC_OUT     0x02
-#define EPNUM_CDC_IN      0x83
+void set_usb_product_pololu_usb08a()
+{
+  desc_device.idVendor = USB_VENDOR_ID_POLOLU;
+  desc_device.idProduct = USB_PRODUCT_ID_USB08A;
+  usb_strings[STRING_ID_MANUFACTURER] = USB_STRING_POLOLU;
+  usb_strings[STRING_ID_PRODUCT] = USB_STRING_USB08A;
+  usb_strings[STRING_ID_CDC_PORT] = USB_STRING_USB08A;
+}
+
+void set_usb_product_pololu_usb08b()
+{
+  desc_device.idVendor = USB_VENDOR_ID_POLOLU;
+  desc_device.idProduct = USB_PRODUCT_ID_USB08B;
+  usb_strings[STRING_ID_MANUFACTURER] = USB_STRING_POLOLU;
+  usb_strings[STRING_ID_PRODUCT] = USB_STRING_USB08B;
+  usb_strings[STRING_ID_CDC_PORT] = USB_STRING_USB08B;
+}
+
+uint16_t get_usb_vendor_id(void)
+{
+  return desc_device.idVendor;
+}
+
+uint16_t get_usb_product_id(void)
+{
+  return desc_device.idProduct;
+}
+
+const uint8_t * tud_descriptor_device_cb(void)
+{
+  return (const uint8_t *)&desc_device;
+}
+
+#define EP_ID_CDC_NOTIF   0x81
+#define EP_ID_CDC_OUT     0x02
+#define EP_ID_CDC_IN      0x83
 
 #define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN)
 
 // USB configuration descriptor
 const uint8_t desc_fs_configuration[] = {
     // Config number, interface count, string index, total length, attribute, power in mA
-    TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 100),
+    TUD_CONFIG_DESCRIPTOR(1, 2, 0, CONFIG_TOTAL_LEN, 0x00, 100),
 
     // Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, 4, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 64),
+    TUD_CDC_DESCRIPTOR(0, STRING_ID_CDC_PORT, EP_ID_CDC_NOTIF, 8, EP_ID_CDC_OUT, EP_ID_CDC_IN, 64),
 };
 
-// Invoked when received GET CONFIGURATION DESCRIPTOR
-// Application return pointer to descriptor
-// Descriptor contents must exist long enough for transfer to complete
-uint8_t const *tud_descriptor_configuration_cb(uint8_t index) {
-  (void) index; // for multiple configurations
-
-#if TUD_OPT_HIGH_SPEED
-  // Although we are highspeed, host may be fullspeed.
-  return (tud_speed_get() == TUSB_SPEED_HIGH) ? desc_hs_configuration : desc_fs_configuration;
-#else
+const uint8_t * tud_descriptor_configuration_cb(uint8_t index)
+{
+  (void)index;
   return desc_fs_configuration;
-#endif
 }
-
-//--------------------------------------------------------------------+
-// String Descriptors
-//--------------------------------------------------------------------+
-
-// array of pointer to string descriptors
-static char const * usb_strings[] = {
-    NULL,                          // 0: Language is hardcoded
-    USB_VENDOR_STRING,             // 1: Manufacturer
-    USB_PRODUCT_STRING,            // 2: Product
-    NULL,                          // 3: Serial number is handled specially
-    USB_CDC_INTERFACE_STRING,      // 4: CDC Interface
-    FIRMWARE_MODIFICATION_STR,     // 5: Firmware modification string
-};
 
 #define USB_STRING_MAX_LENGTH 64
 static uint16_t usb_string_desc[USB_STRING_MAX_LENGTH + 1];
 
-static const char nibble_to_hex[16] = {
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
-};
+static const char nibble_to_hex[16] = "0123456789ABCDEF";
 
 const uint16_t * tud_descriptor_string_cb(uint8_t index, uint16_t langid)
 {
@@ -120,7 +98,7 @@ const uint16_t * tud_descriptor_string_cb(uint8_t index, uint16_t langid)
     length = 1;
     break;
 
-  case 3:  // Serial number
+  case STRING_ID_SERIAL_NUMBER:
     for (size_t offset = 0; offset < 6; offset++)
     {
       uint16_t v = *(volatile uint16_t *)(UID_BASE + offset * 2);
@@ -137,6 +115,7 @@ const uint16_t * tud_descriptor_string_cb(uint8_t index, uint16_t langid)
     if (index >= sizeof(usb_strings) / sizeof(usb_strings[0])) { return NULL; }
 
     const char * str = usb_strings[index];
+    if (str == NULL) { return NULL; }
 
     length = strlen(str);
     if (length > USB_STRING_MAX_LENGTH){ length = USB_STRING_MAX_LENGTH; }
