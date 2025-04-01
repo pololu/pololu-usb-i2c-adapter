@@ -121,7 +121,7 @@ uint16_t get_usb_product_id(void);
 #define CFG_TUD_CDC_RX_BUFSIZE   64
 #define CFG_TUD_CDC_TX_BUFSIZE   64
 
-// CDC Endpoint transfer buffer size, more is faster
+// CDC Endpoint transfer buffer size
 #define CFG_TUD_CDC_EP_BUFSIZE   64
 
 // MSC Buffer size of Device Mass storage
