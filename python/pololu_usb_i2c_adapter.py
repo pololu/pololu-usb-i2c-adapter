@@ -185,8 +185,8 @@ class UsbToI2CAdapter():
         serial_number = '-'.join(f"{a:02X}{b:02X}" for a, b in zip(sn[::2], sn[1::2]))
 
         info = {
-            'product_id': parts[1],
-            'vendor_id': parts[2],
+            'vendor_id': parts[1],
+            'product_id': parts[2],
             'firmware_version': firmware_version,
             'firmware_version_bcd': parts[3],
             'firmware_modification': firmware_modification,
