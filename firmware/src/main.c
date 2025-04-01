@@ -751,6 +751,7 @@ static void execute_digital_read()
 static void execute_set_regulator()
 {
   regulator_user_enable = command_data[0] & 1;
+  send_byte(board_has_output_regulator ? 0 : ERROR_NOT_SUPPORTED);
 }
 
 static void execute_get_device_info()

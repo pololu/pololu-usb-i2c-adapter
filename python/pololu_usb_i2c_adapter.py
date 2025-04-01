@@ -18,6 +18,7 @@ ERROR_TX_DATA_NACK = 9
 ERROR_BUS_ERROR = 10
 ERROR_ARBITRATION_LOST = 11
 ERROR_OTHER = 12
+ERROR_NOT_SUPPORTED = 13
 
 I2C_STANDARD_MODE = 0
 I2C_FAST_MODE = 1
@@ -44,6 +45,8 @@ class AdapterError(RuntimeError):
             msg = "Received NACK for TX data"
         elif error_code == ERROR_ARBITRATION_LOST:
             msg = "Arbitration lost"
+        elif error_code == ERROR_NOT_SUPPORTED:
+            msg = "Operation not supported"
         else:
             msg = f"Error code {error_code}"
         super().__init__(msg)
@@ -152,6 +155,8 @@ class UsbToI2CAdapter():
     # Enables or disables the on-board regulator.
     def set_regulator(self, enabled):
         self.port.write(b'\xA4' + (b'\1' if enabled else b'\0'))
+        response = self.port.read(1)
+        self._check_response(response, 1)
 
     def get_device_info_raw(self):
         self.port.write(b'\xA7')
