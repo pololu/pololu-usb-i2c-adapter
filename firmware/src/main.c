@@ -363,15 +363,17 @@ static void led_rw_service()
       rw_blink_active = 0;
     }
   }
-  else if (rw_error)
-  {
-    led_yellow(0);
-    led_red((uint32_t)(time_ms - rw_error_start_time + 256) & 512);
-  }
   else
   {
     led_yellow(0);
-    led_red(0);
+    if (rw_error)
+    {
+      led_red((uint32_t)(time_ms - rw_error_start_time + 256) & 512);
+    }
+    else
+    {
+      led_red(0);
+    }
   }
 }
 
