@@ -165,19 +165,17 @@ void start_bootloader_in_system_memory()
 
 void iwdg_init()
 {
-  // Enable write access to watchdog registers.
-  IWDG->KR = 0x5555;
-
-  // Wait for all pending writes to watchdog registers to finish.
-  while (IWDG->SR) {};
+  IWDG->KR = 0xCCCC;  // Enable the watchdog timer.
+  IWDG->KR = 0x5555;  // Enable write access to watchdog registers.
 
   // Set the timeout period to 16 * 0x800 / (32 kHz) = 1.024 s.
   IWDG->PR = 2;       // 1/16 prescaler
   IWDG->RLR = 0x800;
-  IWDG->KR = 0xAAAA;  // ensures the first timeout is accurate
 
-  // Start the watchdog timer (has no effect if the WDG_SW option bit is 0).
-  IWDG->KR = 0xCCCC;
+  // Wait for all pending writes to watchdog registers to finish.
+  while (IWDG->SR) {};
+
+  IWDG->KR = 0xAAAA;  // Refresh the counter value.
 }
 
 void iwdg_clear()
