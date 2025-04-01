@@ -765,12 +765,12 @@ static void execute_get_device_info()
     char firmware_modification[8];
     uint8_t serial_number[12];
   } info = {
-      .size = sizeof(struct DeviceInfo),
-      .info_version = 0,
-      .vendor_id = get_usb_vendor_id(),
-      .product_id = get_usb_product_id(),
-      .firmware_modification = FIRMWARE_MODIFICATION_STR,
-      .firmware_version = FIRMWARE_VERSION_BCD,
+    .size = sizeof(struct DeviceInfo),
+    .info_version = 0,
+    .vendor_id = get_usb_vendor_id(),
+    .product_id = get_usb_product_id(),
+    .firmware_modification = FIRMWARE_MODIFICATION_STR,
+    .firmware_version = FIRMWARE_VERSION_BCD,
   };
   memcpy(info.serial_number, (void *)UID_BASE, 12);
 
