@@ -5,3 +5,4 @@ Release
 *.cfg
 build_debug
 build_release
+result
