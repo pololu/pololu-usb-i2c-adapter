@@ -55,8 +55,11 @@ class AdapterError(RuntimeError):
     def __str__(self):
         return f"{self.args[0]} ({self.error_code})."
 
-class UsbToI2CAdapter():
+# This class represents a connection to a Pololu Isolated USB-to-I2C Adapter
+# (with or without isolated power).
+class USBToI2CAdapter():
     def __init__(self, port=None):
+        self.port = None
         if port:
             self.connect(port)
 
