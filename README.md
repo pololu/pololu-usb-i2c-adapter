@@ -1,6 +1,26 @@
-# Pololu Isolated USB-to-I2C Adapter: firmware and example code
+# Pololu Isolated USB-to-I²C Adapter: firmware and example code
 
 [www.pololu.com](https://www.pololu.com/)
+
+## Summary
+
+This repository contains the source code of the firmware and example code for
+the following Pololu products:
+
+* [Pololu Isolated USB-to-I²C Adapter][5396]
+* [Pololu Isolated USB-to-I²C Adapter with Isolated Power][5397]
+
+[5396]: https://www.pololu.com/product/5396
+[5397]: https://www.pololu.com/product/5397
+
+
+## Python library
+
+The `python` directory of this repository contains a Python library
+that implements the adapter's protocol, making it easy to control
+the adapter from a Python program running on PC.
+
+See [python/README.md](python/README.md) for more details.
 
 
 ## Building the firmware with STM32CubeIDE
@@ -86,7 +106,7 @@ This firmware includes code from the following third-party libraries:
 ## Drivers
 
 The `drivers` directory of this repository contains a USB driver
-for Windows enables it to recognize the adapter.  
+for Windows enables it to recognize the adapter.
 You can install the driver by right-clicking on `pololu-usb-to-i2c-adapter.inf`
 and selecting "Install".
 

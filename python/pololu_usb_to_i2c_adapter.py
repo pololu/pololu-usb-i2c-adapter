@@ -2,7 +2,6 @@
 #
 # Copyright (C) 2025 Pololu Corporation
 
-import serial
 import struct
 
 ERROR_NONE = 0
@@ -55,20 +54,38 @@ class AdapterError(RuntimeError):
     def __str__(self):
         return f"{self.args[0]} ({self.error_code})."
 
-# This class represents a connection to a Pololu Isolated USB-to-I2C Adapter
+## This class represents a connection to a Pololu Isolated USB-to-I2C Adapter
 # (with or without isolated power).
 class USBToI2CAdapter():
+    ## Initializes the object.
+    #
+    # If @p port is None, the object starts in a disconnected state, and you
+    # should call connect() to connect to a serial port.
+    #
+    # Otherwise, this function calls connect() to connect to the specified
+    # serial port.
     def __init__(self, port=None):
         self.port = None
         if port:
             self.connect(port)
 
+    ## Connects this object to the specified serial port.
+    #
+    # @p port should be a string specifying the name of the serial port or
+    # a `Serial` object from PySerial.
     def connect(self, port):
         if isinstance(port, str):
+            import serial
             port = serial.Serial(port, baudrate=115200, timeout=0.1)
         self.port = port
         self.port.read()  # discard old received data
 
+    ## Disconnects from the serial port.
+    def disconnect(self):
+        self.port.close()
+        self.port = None
+
+    ## Returns true if this object is connected to a serial port.
     def is_connected(self):
         return self.port != None
 
@@ -83,10 +100,10 @@ class USBToI2CAdapter():
         if error_code:
             raise AdapterError(error_code)
 
-    # Writes data to the I2C target.
+    ## Writes data to an I2C target.
     #
-    # 'address' is the 7-bit I2C address to write to.
-    # 'data' is a bytes or bytearray object with the data to write.
+    # @p address is the 7-bit I2C address to write to.
+    # @p data is a bytes or bytearray object with the data to write.
     #
     # Raises an exception if the I2C address is not acknowledged by the target,
     # if any of the data bytes is not acknowledged, or if there is a timeout
@@ -105,10 +122,10 @@ class USBToI2CAdapter():
 
       return len(data)
 
-    # Reads data from an I2C target.
+    ## Reads data from an I2C target.
     #
-    # 'address' is the 7-bit I2C address to read from.
-    # 'count' is the number of bytes to read.
+    # @p address is the 7-bit I2C address to read from.
+    # @p count is the number of bytes to read.
     #
     # Raises an exception if the I2C address is not acknowledged by the target
     # or if there is a timeout due to clock stretching.
@@ -128,6 +145,11 @@ class USBToI2CAdapter():
 
         return response[1:]
 
+    ## Sends a "Set I2C mode" command to the device based on the specified
+    # frequency, in units of kHz.
+    #
+    # See the user's guide for more information about the "Set I2C Mode"
+    # comand.
     def set_i2c_frequency(self, frequency_khz):
         if frequency_khz >= 1000: mode = I2C_FAST_MODE_PLUS
         elif frequency_khz >= 400: mode = I2C_FAST_MODE
@@ -136,18 +158,26 @@ class USBToI2CAdapter():
         cmd = b'\x94' + mode.to_bytes(1, 'little')
         self.port.write(cmd)
 
+    ## Sets the maximum allowed time for I2C read/write commands to the
+    # specified value, in units of milliseconds.
     def set_i2c_timeout(self, timeout_ms):
         cmd = b'\x97' + struct.pack("<H", timeout_ms)
         self.port.write(cmd)
 
+    ## Sends a "Clear bus", which can help the system recover from situations
+    # where the SDA line is stuck low.
     def clear_bus(self):
         self.port.write(b'\x98')
 
+    ## Sends a "Set STM32 timing" command to the device, which allows
+    # advanced control over the timing parameters of the I2C communication.
+    #
+    # See the user's guide for more information.
     def set_stm32_timing(self, timingr, gpio_fmp_mode):
         cmd = b'\xA1' + struct.pack("<Lb", timingr, gpio_fmp_mode)
         self.port.write(cmd)
 
-    # Gets digital readings of SCL, SDA, and BOOT0 to help debug problems.
+    ## Returns digital readings (0 or 1) of SCL and SDA to help debug problems.
     def digital_read(self):
         self.port.write(b'\xA2')
         response = self.port.read(1)
@@ -155,12 +185,20 @@ class USBToI2CAdapter():
         r = response[0]
         return { 'SCL': r >> 0 & 1, 'SDA': r >> 1 & 1 }
 
-    # Enables or disables the on-board regulator.
+    ## Enables or disables the on-board regulator that supplies power
+    # from USB to the I2C bus.
+    #
+    # This raises an exception if the adapter lacks the hardware for
+    # supplying power to the I2C bus.
     def set_regulator(self, enabled):
         self.port.write(b'\xA4' + (b'\1' if enabled else b'\0'))
         response = self.port.read(1)
         self._check_response(response, 1)
 
+    ## Returns the binary string from the device describing info like its
+    # firmware version.
+    #
+    # @sa get_device_info()
     def get_device_info_raw(self):
         self.port.write(b'\xA7')
         part1 = self.port.read(1)
@@ -170,8 +208,16 @@ class USBToI2CAdapter():
         self._check_response_length(part2, length - 1)
         return part1 + part2
 
-    # Returns the binary string from the device describing info like its
-    # firmware version.
+    ## Returns a dict with the following information about the device:
+    #
+    # - 'vendor_id': The USB vendor ID.
+    # - 'product_id': The USB product ID.
+    # - 'firmware_version': The firmware version as a string.
+    # - 'firmware_version_bcd': The firmware version as binary-coded decimal
+    #   (e.g. 0x102 for version 1.02).
+    # - 'firmware_modification': A string describing any special modifications
+    #   to the firmware, or None.
+    # - 'serial_number': A unique string identifying the device.
     def get_device_info(self):
         raw = self.get_device_info_raw()
         parts = struct.unpack_from("<xBHHH8s12s", raw)
@@ -197,14 +243,13 @@ class USBToI2CAdapter():
         }
         return info
 
-    # Performs multiple commands with a single serial port write
+    ## Performs multiple read/write commands with a single serial port write
     # and a single serial port read.
     #
-    # Note: We don't know exactly how many commands you can pass to this
-    # function.  At some point, if there too many commands, they fill up all
-    # the buffers in the OS and the adapter, and the write would timeout.
-    # If that happens, this function could be improved to interleave the
-    # writing and the reading.
+    # Returns an array with the raw bytes of the responses from the adapter.
+    #
+    # Note: If you pass too many commands, they fill up all the buffers in the
+    # OS and the adapter, and the write will timeout.
     #
     # Example usage:
     #   commands = [
@@ -245,6 +290,11 @@ class USBToI2CAdapter():
             response_index += response_size
         return responses
 
+    ## Scans the I2C bus for devices and returns a list of the addresses of
+    # devices found.
+    #
+    # This works by performing a zero-length write to every 7-bit address and
+    # returning the addresses which get acknowledged by a target device.
     def scan(self):
         addresses_to_scan = range(128)
         cmd_bytes = b''
