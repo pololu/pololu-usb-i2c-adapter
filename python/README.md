@@ -16,13 +16,8 @@ This library is designed to run on any Python 3 interpreter that has
 
 ## Getting started
 
-Run `pip3 install pyserial` to install PySerial.
-
-Run `python3 -m site --user-site` to find our where Python looks for local
-libraries, and then copy `pololu_usb_to_i2c_adapter.py` to
-that location so you can import it from anywhere.
-Alteratively, you can simply copy  `pololu_usb_to_i2c_adapter.py` to the same
-directory as the Python code that will use it.
+Download this code to your system, navigate to this directory, and then run
+`pip3 install .` to install this library and PySerial.
 
 
 ## Example code

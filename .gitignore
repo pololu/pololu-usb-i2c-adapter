@@ -3,7 +3,9 @@ Debug
 Release
 *.Launch
 *.cfg
+build
 build_debug
 build_release
 result
 docs
+*.egg-info
