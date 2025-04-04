@@ -620,9 +620,17 @@ static uint8_t i2c_write(uint8_t address, size_t count, const uint8_t data[count
 static uint8_t i2c_read(uint8_t address, size_t count, uint8_t data[count])
 {
   uint8_t error = i2c_check_bus();
-  if (error) { return error; }
+  if (error)
+  {
+    memset(data, 0, count);
+    return error;
+  }
 
-  if (count == 0 || count > 255) { return ERROR_OTHER; }
+  if (count == 0 || count > 255)
+  {
+    memset(data, 0, count);
+    return ERROR_OTHER;
+  }
 
   I2C1->CR2 = I2C_CR2_START | I2C_CR2_RD_WRN |
     (address << 1) | (count << I2C_CR2_NBYTES_Pos);
@@ -635,6 +643,7 @@ static uint8_t i2c_read(uint8_t address, size_t count, uint8_t data[count])
     {
       if (error == ERROR_TIMEOUT) { return i ? ERROR_RX_TIMEOUT : ERROR_ADDRESS_TIMEOUT; }
       if (error == ERROR_NACK) { return i ? ERROR_NACK : ERROR_ADDRESS_NACK; }
+      memset(data + i, 0, count - i);
       return error;
     }
     if (i == 0) { read_events++; }
