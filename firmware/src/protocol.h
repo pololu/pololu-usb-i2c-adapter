@@ -1,7 +1,7 @@
 #pragma once
 
-#define CMD_WRITE 0x91
-#define CMD_READ 0x92
+#define CMD_I2C_WRITE 0x91
+#define CMD_I2C_READ 0x92
 #define CMD_SET_I2C_MODE 0x94
 #define CMD_SET_I2C_TIMEOUT 0x97
 #define CMD_CLEAR_BUS 0x98

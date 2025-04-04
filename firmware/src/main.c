@@ -796,10 +796,10 @@ static void execute_command()
 {
   switch (command)
   {
-  case CMD_WRITE:
+  case CMD_I2C_WRITE:
     execute_write();
     break;
-  case CMD_READ:
+  case CMD_I2C_READ:
     execute_read();
     break;
   case CMD_SET_I2C_MODE:
@@ -854,8 +854,8 @@ static void handle_rx_byte(uint8_t byte)
     command = byte;
     switch (byte)
     {
-    case CMD_WRITE:
-    case CMD_READ:
+    case CMD_I2C_WRITE:
+    case CMD_I2C_READ:
       rx_state = RX_STATE_GET_ADDRESS;
       break;
     case CMD_SET_I2C_MODE:
@@ -885,7 +885,7 @@ static void handle_rx_byte(uint8_t byte)
   case RX_STATE_GET_LENGTH:
     command_data_length = byte;
     command_data_received = 0;
-    if (command == CMD_WRITE && command_data_length > 0)
+    if (command == CMD_I2C_WRITE && command_data_length > 0)
     {
       rx_state = RX_STATE_GET_DATA;
     }
