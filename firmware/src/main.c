@@ -619,17 +619,17 @@ static uint8_t i2c_write(uint8_t address, size_t count, const uint8_t data[count
 // before we do any extra I/O.
 static uint8_t i2c_read(uint8_t address, size_t count, uint8_t data[count])
 {
+  if (count == 0 || count > 255)
+  {
+    memset(data, 0, count);
+    return ERROR_OTHER;
+  }
+
   uint8_t error = i2c_check_bus();
   if (error)
   {
     memset(data, 0, count);
     return error;
-  }
-
-  if (count == 0 || count > 255)
-  {
-    memset(data, 0, count);
-    return ERROR_OTHER;
   }
 
   I2C1->CR2 = I2C_CR2_START | I2C_CR2_RD_WRN |
