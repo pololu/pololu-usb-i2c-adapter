@@ -1,5 +1,5 @@
 [project]
-name = "pololu-usb-to-i2c-adapter"
+name = "pololu-usb-i2c-adapter"
 version = "1.0.0"
 readme = "README.md"
 dependencies = ["pyserial"]

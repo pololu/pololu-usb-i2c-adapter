@@ -28,21 +28,20 @@ read the "Model ID" and "Model Type" registers from a
 
 ```py
 #!/usr/bin/env python3
-
-from pololu_usb_to_i2c_adapter import USBToI2CAdapter
-i2c = USBToI2CAdapter('/dev/ttyACM0')
+import pololu_usb_i2c_adapter
+i2c = pololu_usb_i2c_adapter.Adapter('/dev/ttyACM0')
 address = 0b0101001
 i2c.write_to(address, b'\x01\x0F')
-id_bytes = i2c.read_from(address, 2)
-print(id_bytes)
+data = i2c.read_from(address, 2)
+print(data)
 ```
 
 If everything is connected properly, the program should print
 <code>b'\xea\xcc'</code>, confirming that the connected device is a VL53L1X.
 
-The first line of Python code imports the library's main class, `USBToI2CAdapter`.
+The first line of Python code imports the library.
 
-The second line creates a `USBToI2CAdapter` object and connects to the specified
+The second line creates an `Adapter` object and connects to the specified
 serial port.  The port name you have to use here depends on your operating
 system and the number of other CDC ACM devices that are connected, so you might
 need to change it.
@@ -70,11 +69,11 @@ Instead of writing <code>b'\x01\x0F'</code>, you can write
 `(0x10F).to_bytes(2, 'big')`.
 
 The fifth line reads two bytes from the VL53L1X and returns them as a Python
-`bytes` object.  You can write `id_bytes[0]` or `id_bytes[1]` to get the value
+`bytes` object.  You can write `data[0]` or `data[1]` to get the value
 of an individual byte as an integer, or you can use the `unpack` method in
 Python's `struct` module to decode the binary data to desired format.
 
-For more documentation, see the comments in pololu_usb_to_i2c_adapter.py.
+For more documentation, see the comments in pololu_usb_i2c_adapter.py.
 
 [3415]: https://www.pololu.com/product/3415
 

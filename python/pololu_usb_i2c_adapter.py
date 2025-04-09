@@ -56,7 +56,7 @@ class AdapterError(RuntimeError):
 
 ## This class represents a connection to a Pololu Isolated USB-to-I2C Adapter
 # (with or without isolated power).
-class USBToI2CAdapter():
+class Adapter():
     ## Initializes the object.
     #
     # If @p port is None, the object starts in a disconnected state, and you
@@ -323,4 +323,3 @@ class USBToI2CAdapter():
         if stop is not True:
             raise RuntimeError("The 'stop' argument must be True.")
         return self.read_from(address, count)
-
