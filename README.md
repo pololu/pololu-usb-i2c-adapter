@@ -4,8 +4,8 @@
 
 ## Summary
 
-This repository contains the source code of the firmware and example code for
-the following Pololu products:
+This repository contains the firmware source code, drivers, and a
+Python library for the following Pololu products:
 
 * [Pololu Isolated USB-to-I²C Adapter][5396]
 * [Pololu Isolated USB-to-I²C Adapter with Isolated Power][5397]
