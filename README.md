@@ -1,4 +1,4 @@
-# Pololu Isolated USB-to-I²C Adapter: firmware and example code
+# Pololu Isolated USB-to-I²C Adapter software and drivers
 
 [www.pololu.com](https://www.pololu.com/)
 
