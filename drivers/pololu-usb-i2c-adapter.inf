@@ -8,10 +8,10 @@ p2502="Pololu Isolated USB-to-I2C Adapter"
 p2503="Pololu Isolated USB-to-I2C Adapter with Isolated Power"
 
 [DefaultInstall]
-CopyINF=pololu-usb-to-i2c-adapter.inf
+CopyINF=pololu-usb-i2c-adapter.inf
 
 [Version]
-DriverVer=04/01/2025,1.0.0
+DriverVer=04/08/2025,1.0.0
 Signature=$Windows NT$
 Class=Ports
 ClassGuid={4D36E978-E325-11CE-BFC1-08002BE10318}

@@ -107,9 +107,9 @@ This firmware includes code from the following third-party libraries:
 
 The `drivers` directory of this repository contains a USB driver
 for Windows enables it to recognize the adapter.
-You can install the driver by right-clicking on `pololu-usb-to-i2c-adapter.inf`
+You can install the driver by right-clicking on `pololu-usb-i2c-adapter.inf`
 and selecting "Install".
 
-This driver is not needed on Windows 10 and later, but installing it
-allows you to see the correct product name in the Device Manager
-instead of "USB Serial Device".
+Driver installation is not required on Windows 10 and later,
+but installing the driver is recommended because it allows you to see the
+correct product name in the Device Manager instead of "USB Serial Device".
