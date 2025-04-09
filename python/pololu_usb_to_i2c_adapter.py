@@ -185,12 +185,11 @@ class USBToI2CAdapter():
         r = response[0]
         return { 'SCL': r >> 0 & 1, 'SDA': r >> 1 & 1 }
 
-    ## Enables or disables the on-board regulator that supplies power
-    # from USB to the I2C bus.
+    ## Enables or disables the adapter's VCC power supply.
     #
     # This raises an exception if the adapter lacks the hardware for
     # supplying power to the I2C bus.
-    def set_regulator(self, enabled):
+    def enable_vcc_out(self, enabled):
         self.port.write(b'\xA4' + (b'\1' if enabled else b'\0'))
         response = self.port.read(1)
         self._check_response(response, 1)

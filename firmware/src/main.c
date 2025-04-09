@@ -759,7 +759,7 @@ static void execute_digital_read()
   send_byte(response);
 }
 
-static void execute_set_regulator()
+static void execute_enable_vcc_out()
 {
   regulator_user_enable = command_data[0] & 1;
   send_byte(board_has_output_regulator ? 0 : ERROR_NOT_SUPPORTED);
@@ -820,8 +820,8 @@ static void execute_command()
   case CMD_SET_STM32_TIMING:
     execute_set_stm32_timing();
     break;
-  case CMD_SET_REGULATOR:
-    execute_set_regulator();
+  case CMD_ENABLE_VCC_OUT:
+    execute_enable_vcc_out();
     break;
   case CMD_DIGITAL_READ:
     execute_digital_read();
@@ -868,7 +868,7 @@ static void handle_rx_byte(uint8_t byte)
       rx_state = RX_STATE_GET_ADDRESS;
       break;
     case CMD_SET_I2C_MODE:
-    case CMD_SET_REGULATOR:
+    case CMD_ENABLE_VCC_OUT:
       prepare_to_receive_data(1);
       break;
     case CMD_SET_I2C_TIMEOUT:
