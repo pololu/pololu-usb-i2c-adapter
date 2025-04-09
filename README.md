@@ -65,7 +65,7 @@ and then close it.  Some general-purpose terminal programs that work for this ar
 
 If that method does not work, you can short together two exposed pads while
 powering up the board to force it into bootloader mode.
-Contact Pololu for mor information.  <!-- TODO: just add pictures of the pads -->
+Contact Pololu for more information.  <!-- TODO: just add pictures of the pads -->
 
 ## Updating the firmware using the bootloader
 
