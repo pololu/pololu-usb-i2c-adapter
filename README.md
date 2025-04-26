@@ -70,12 +70,10 @@ Contact Pololu for more information.  <!-- TODO: just add pictures of the pads -
 ## Updating the firmware using the bootloader
 
 After getting the board into bootloader mode, you can use the bootloader to
-update the firmware.  First install the [STM32CubeProgrammer] software from
-ST.  You can either load the programmer using the GUI provided by that software,
+update the firmware.  First install the [STM32CubeProgrammer software] from
+ST.  You can either load the firmware using the GUI provided by that software,
 or the `STM32_Programmer_CLI` command-line interface.  The `firmware/program.sh`
 script in this repository shows an example of how to use the CLI.
-
-<!-- TODO: mode details about using the GUI -->
 
 [STM32CubeProgrammer]: https://www.st.com/en/development-tools/stm32cubeprog.html
 
