@@ -42,6 +42,8 @@ class AdapterError(RuntimeError):
             msg = "Target device did not respond"
         elif error_code == ERROR_TX_DATA_NACK:
             msg = "Received NACK for TX data"
+        elif error_code == ERROR_BUS_ERROR:
+            msg = "Bus error"
         elif error_code == ERROR_ARBITRATION_LOST:
             msg = "Arbitration lost"
         elif error_code == ERROR_NOT_SUPPORTED:
