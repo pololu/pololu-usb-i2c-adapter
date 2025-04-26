@@ -14,10 +14,30 @@ This library is designed to run on any Python 3 interpreter that has
 [PySerial](https://pypi.org/project/pyserial/) or an equivalent library.
 
 
-## Getting started
+## Installation
+
+First, install Git, Python 3, and the Python 3 venv module by following the
+appropriate instructions for your operating system.
+On Debian-based operating systems, for example, you can run:
+
+    sudo apt install git python3-venv
+
+In a shell, run this command to create a Python virtual environment to
+hold this library and its dependencies.
+
+    python3 -m venv ~/myvenv
+
+Run the following command to add the venv to your PATH so you can easily run the
+`python3` and `pip3` commands for this virtual environment.  You will need to
+do this every time to start a new shell.
+
+    export PATH=~/myvenv/bin/:$PATH
+
+(You can test that this worked by running `which pip3`.)
 
 Download this code to your system, navigate to this directory, and then run
-`pip3 install .` to install this library and PySerial.
+`pip3 install .` to install this library and PySerial in the virtual
+environment.
 
 
 ## Example code
