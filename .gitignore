@@ -9,3 +9,6 @@ build_release
 result
 docs
 *.egg-info
+.vscode
+CMakeFiles
+CMakeCache.txt

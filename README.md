@@ -23,36 +23,24 @@ the adapter from a Python program running on PC.
 See [python/README.md](python/README.md) for more details.
 
 
-## Building the firmware with STM32CubeIDE
+## Building the firmware
 
-Download the [STM32CubeIDE] software from ST's website and install it.
-Also, update to the latest version using '''Help > Check for Updates'''.
+After installing the `arm-none-eabi-gcc` toolchain, CMake, and Ninja,
+navigate to the `firmware` directory in your shell and run these commands
+to build the firmware:
 
-Open the IDE and select this folder (the folder with README.md) as the
-workspace.
+  cmake --preset release
+  cd build_release
+  cmake --build .
 
-In the "Project" menu, select "Build All..." to build the project.
-
-The IDE does not automatically detect projects in the workspace.  To open those
-projects and build them, you have first go to File > Import... >
-Existing Projects into Workspace.
-
-[STM32CubeIDE]: https://www.st.com/en/development-tools/stm32cubeide.html
-
-
-## Building the firmware with Bash and GCC
-
-If you have the Bash shell and arm-none-eabi-gcc installed on your PATH, you
-can build the firmware by running the `build.sh` script in the
-`firmware` directory.  By default, it builds in release mode.  You can
-specify what configuration to build by providing an argument to the script,
-which should be `release` or `debug`.
+Alternatively, you can compile the firmware using the
+[STM32 extension for VS Code](https://www.st.com/content/st_com/en/campaigns/stm32-vs-code-extension-z11.html).
 
 
 ## Getting the board into bootloader mode
 
-To update the firmware on your board, you must first get it into bootloader mode,
-which means it is running the bootloader the STM32's system memory.
+To update the firmware on your board, you must first get it into bootloader
+mode, which means it is running the bootloader in the STM32's system memory.
 
 The simplest way to start the bootloader is to open the adapter's virtual
 serial port with a serial terminal program, set the baud rate to 600,
@@ -67,6 +55,7 @@ If that method does not work, you can short together two exposed pads while
 powering up the board to force it into bootloader mode.
 Contact Pololu for more information.  <!-- TODO: just add pictures of the pads -->
 
+
 ## Updating the firmware using the bootloader
 
 After getting the board into bootloader mode, you can use the bootloader to
@@ -76,6 +65,7 @@ or the `STM32_Programmer_CLI` command-line interface.  The `firmware/program.sh`
 script in this repository shows an example of how to use the CLI.
 
 [STM32CubeProgrammer]: https://www.st.com/en/development-tools/stm32cubeprog.html
+
 
 ## Configuring the code style in STM32CubeIDE
 
