@@ -70,7 +70,7 @@ uint8_t rx_state;
 uint8_t command;
 size_t command_data_length;
 uint8_t i2c_address;
-uint8_t command_data[256];
+uint8_t command_data[264];
 size_t command_data_received;
 
 uint32_t i2c_timeout_base;
@@ -546,7 +546,8 @@ static uint8_t i2c_wait_for_not_busy()
   return ERROR_NONE;
 }
 
-static uint8_t i2c_write(uint8_t address, size_t count, const uint8_t data[count])
+static uint8_t i2c_write(uint8_t address, size_t count,
+  const uint8_t data[count], bool stop)
 {
   if (count > 255) { return ERROR_OTHER; }
 
@@ -581,17 +582,20 @@ static uint8_t i2c_write(uint8_t address, size_t count, const uint8_t data[count
   }
   read_events += 1;
 
-  // Issue a STOP condition.
-  I2C1->CR2 = I2C_CR2_STOP;
-  assert(!(I2C1->ISR & I2C_ISR_TC));
-
-  return i2c_wait_for_not_busy();
+  if (stop)
+  {
+    // Issue a STOP condition.
+    I2C1->CR2 = I2C_CR2_STOP;
+    assert(!(I2C1->ISR & I2C_ISR_TC));
+    return i2c_wait_for_not_busy();
+  }
+  else
+  {
+    return ERROR_NONE;
+  }
 }
 
-// Note: This function actually returns before the I2C module has taken care of the
-// final ACK bit and the STOP condition.  That's why it's important to check the BUSY bit
-// before we do any extra I/O.
-static uint8_t i2c_read(uint8_t address, size_t count, uint8_t data[count])
+static uint8_t i2c_read(uint8_t address, size_t count, uint8_t data[count], bool check_bus)
 {
   if (count == 0 || count > 255)
   {
@@ -599,7 +603,8 @@ static uint8_t i2c_read(uint8_t address, size_t count, uint8_t data[count])
     return ERROR_OTHER;
   }
 
-  uint8_t error = i2c_check_bus();
+  uint8_t error = 0;
+  if (check_bus) { error = i2c_check_bus(); }
   if (error)
   {
     memset(data, 0, count);
@@ -630,6 +635,19 @@ static uint8_t i2c_read(uint8_t address, size_t count, uint8_t data[count])
   assert(!(I2C1->ISR & I2C_ISR_TC));
 
   return i2c_wait_for_not_busy();
+}
+
+static uint8_t i2c_write_and_read(uint8_t address,
+  size_t write_count, const uint8_t write_data[write_count],
+  size_t read_count, uint8_t read_data[read_count])
+{
+  uint8_t error = i2c_write(address, write_count, write_data, false);
+  if (error)
+  {
+    memset(read_data, 0, read_count);
+    return error;
+  }
+  return i2c_read(address, read_count, read_data, false);
 }
 
 // Send pulses on SCL to help fix situations where a device is driving its SDA
@@ -667,18 +685,11 @@ static void send_data(size_t count, uint8_t data[count])
   tx_byte_count += count;
 }
 
-static void send_zeros(size_t count)
-{
-  assert(tx_byte_count + count <= sizeof(tx_buffer));
-  memset(tx_buffer + tx_byte_count, 0, count);
-  tx_byte_count += count;
-}
-
 static void execute_write()
 {
   rw_error = 0;
   i2c_timeout_start();
-  uint8_t error = i2c_write(i2c_address, command_data_length, command_data);
+  uint8_t error = i2c_write(i2c_address, command_data_length, command_data, true);
   send_byte(error);
   rw_error = error && command_data_length;
   rw_error_start_time = time_ms;
@@ -690,15 +701,44 @@ static void execute_read()
   if (command_data_length == 0)
   {
     send_byte(ERROR_PROTOCOL);
-    send_zeros(command_data_length);
     return;
   }
 
   rw_error = 0;
   i2c_timeout_start();
-  uint8_t error = i2c_read(i2c_address, command_data_length, tx_buffer + tx_byte_count + 1);
+  uint8_t error = i2c_read(i2c_address, command_data_length, tx_buffer + tx_byte_count + 1, true);
   send_byte(error);
   tx_byte_count += command_data_length;
+  rw_error = (bool)error;
+  rw_error_start_time = time_ms;
+}
+
+static void execute_write_and_read()
+{
+  uint8_t i2c_address = command_data[0];
+  size_t write_length = command_data[1];
+  size_t read_length = command_data[2];
+
+  if (command_data_length < 3 + write_length)
+  {
+    // We need more data.
+    command_data_length = 3 + write_length;
+    return;
+  }
+
+  // Zero-length CMD_I2C_READ commands seem to put the bus into a bad state,
+  // so let's not attempt to support zero-length reads here either.
+  if (read_length == 0)
+  {
+    send_byte(ERROR_PROTOCOL);
+    return;
+  }
+  rw_error = 0;
+  i2c_timeout_start();
+  uint8_t error = i2c_write_and_read(i2c_address,
+    write_length, command_data + 3, read_length, tx_buffer + tx_byte_count + 1);
+  send_byte(error);
+  tx_byte_count += read_length;
   rw_error = (bool)error;
   rw_error_start_time = time_ms;
 }
@@ -785,6 +825,9 @@ static void execute_command()
   case CMD_I2C_READ:
     execute_read();
     break;
+  case CMD_I2C_WRITE_AND_READ:
+    execute_write_and_read();
+    break;
   case CMD_SET_I2C_MODE:
     execute_set_i2c_mode();
     break;
@@ -841,6 +884,9 @@ static void handle_rx_byte(uint8_t byte)
     case CMD_I2C_READ:
       rx_state = RX_STATE_GET_ADDRESS;
       break;
+    case CMD_I2C_WRITE_AND_READ:
+      prepare_to_receive_data(3);
+      break;
     case CMD_SET_I2C_MODE:
     case CMD_ENABLE_VCC_OUT:
       prepare_to_receive_data(1);
@@ -878,14 +924,20 @@ static void handle_rx_byte(uint8_t byte)
       rx_state = RX_STATE_IDLE;
     }
     break;
+    break;
   case RX_STATE_GET_DATA:
     assert(command_data_received < command_data_length);
     assert(command_data_length <= sizeof(command_data));
     command_data[command_data_received++] = byte;
     if (command_data_received >= command_data_length)
     {
+      // Try to execute the command.  If we need more data, the command's code
+      // will increase command_data_length and we should stay in this state. 
       execute_command();
-      rx_state = RX_STATE_IDLE;
+      if (command_data_received >= command_data_length)
+      {
+        rx_state = RX_STATE_IDLE;
+      }
     }
     break;
   }

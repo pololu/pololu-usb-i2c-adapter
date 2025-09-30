@@ -114,14 +114,11 @@ class Adapter():
     def write_to(self, address, data):
       if len(data) > 255:
           raise RuntimeError("Cannot write more than 255 bytes.")
-
       cmd = b'\x91' + address.to_bytes(1, 'little') + \
           len(data).to_bytes(1, 'little') + data
       self.port.write(cmd)
-
       response = self.port.read(1)
       self._check_response(response, 1)
-
       return len(data)
 
     ## Reads data from an I2C target.
@@ -136,15 +133,30 @@ class Adapter():
     def read_from(self, address, count):
         if count > 255:
             raise RuntimeError("Cannot read more than 255 bytes.")
-
         cmd = b'\x92' + address.to_bytes(1, 'little') + \
             count.to_bytes(1, 'little')
         self.port.write(cmd)
-
         response = self.port.read(1 + count)
-
         self._check_response(response, 1 + count)
+        return response[1:]
 
+    ## Writes data to an I2C target and then reads data from it, with a
+    ## "repeated start" in between.
+    #
+    # @p address is the 7-bit I2C address to read from.
+    # @p write_data is a bytes or bytearray object with the data to write.
+    # @p read_count is the number of bytes to read.
+    def write_and_read(self, address, write_data, read_count):
+        if len(write_data) > 255:
+            raise RuntimeError("Cannot write more than 255 bytes.")
+        if read_count > 255:
+            raise RuntimeError("Cannot read more than 255 bytes.")
+        cmd = b'\x9B' + address.to_bytes(1, 'little') + \
+            len(write_data).to_bytes(1, 'little') + \
+            read_count.to_bytes(1, 'little') + write_data
+        self.port.write(cmd)
+        response = self.port.read(1 + read_count)
+        self._check_response(response, 1 + read_count)
         return response[1:]
 
     ## Sends a "Set I2C mode" command to the device based on the specified
@@ -317,6 +329,7 @@ class Adapter():
     # For compatibility with MicroPython's I2C class.
     def writeto(self, address, data, stop=True):
         if stop is not True:
+            # See write_and_read() if you need a repeated start between writing and reading.
             raise RuntimeError("The 'stop' argument must be True.")
         return self.write_to(address, data)
 

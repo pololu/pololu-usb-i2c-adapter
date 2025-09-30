@@ -35,7 +35,7 @@ void set_usb_product_pololu_usb08b(void);
 uint16_t get_usb_vendor_id(void);
 uint16_t get_usb_product_id(void);
 
-#define FIRMWARE_VERSION_BCD           0x100
+#define FIRMWARE_VERSION_BCD           0x101
 #define FIRMWARE_MODIFICATION_STR      "-"
 
 // 0x1FFB is the Vendor ID assigned to Pololu Corporation by the USB
