@@ -2,9 +2,12 @@ source $stdenv/setup
 
 cp --no-preserve=mode -r $src firmware
 cd firmware
-bash ./build.sh
-chmod a-x build_release/firmware.elf
-arm-none-eabi-strip build_release/firmware.elf
+cmake --preset release
+cd build_release
+cmake --build .
+chmod a-x firmware.elf
+arm-none-eabi-strip firmware.elf
 mkdir -p $out
-cp build_release/firmware.{elf,list,map} $out/
-arm-none-eabi-size build_release/firmware.elf > $out/firmware.size
+cp firmware.{elf,map} $out/
+arm-none-eabi-size firmware.elf > $out/firmware.size
+arm-none-eabi-objdump -h -S firmware.elf > firmware.list
