@@ -47,9 +47,7 @@
 #define REG_EN_PIN PA4
 
 #define RX_STATE_IDLE 0
-#define RX_STATE_GET_ADDRESS 1
-#define RX_STATE_GET_LENGTH 2
-#define RX_STATE_GET_DATA 3
+#define RX_STATE_GET_DATA 1
 
 #define MAX_RESPONSE_SIZE (1+255)
 
@@ -69,7 +67,6 @@ size_t tx_byte_count, tx_index;
 uint8_t rx_state;
 uint8_t command;
 size_t command_data_length;
-uint8_t i2c_address;
 uint8_t command_data[264];
 size_t command_data_received;
 
@@ -687,9 +684,18 @@ static void send_data(size_t count, uint8_t data[count])
 
 static void execute_write()
 {
+  uint8_t i2c_address = command_data[0];
+  size_t write_length = command_data[1];
+  if (command_data_length < 2 + write_length)
+  {
+    // We need more data.
+    command_data_length = 2 + write_length;
+    return;
+  }
+
   rw_error = 0;
   i2c_timeout_start();
-  uint8_t error = i2c_write(i2c_address, command_data_length, command_data, true);
+  uint8_t error = i2c_write(i2c_address, write_length, command_data + 2, true);
   send_byte(error);
   rw_error = error && command_data_length;
   rw_error_start_time = time_ms;
@@ -697,8 +703,11 @@ static void execute_write()
 
 static void execute_read()
 {
+  uint8_t i2c_address = command_data[0];
+  size_t read_length = command_data[1];
+
   // Zero-length reads seem to put the bus in a bad state.
-  if (command_data_length == 0)
+  if (read_length == 0)
   {
     send_byte(ERROR_PROTOCOL);
     return;
@@ -706,9 +715,9 @@ static void execute_read()
 
   rw_error = 0;
   i2c_timeout_start();
-  uint8_t error = i2c_read(i2c_address, command_data_length, tx_buffer + tx_byte_count + 1, true);
+  uint8_t error = i2c_read(i2c_address, read_length, tx_buffer + tx_byte_count + 1, true);
   send_byte(error);
-  tx_byte_count += command_data_length;
+  tx_byte_count += read_length;
   rw_error = (bool)error;
   rw_error_start_time = time_ms;
 }
@@ -882,7 +891,8 @@ static void handle_rx_byte(uint8_t byte)
     {
     case CMD_I2C_WRITE:
     case CMD_I2C_READ:
-      rx_state = RX_STATE_GET_ADDRESS;
+    case CMD_SET_I2C_TIMEOUT:
+      prepare_to_receive_data(2);
       break;
     case CMD_I2C_WRITE_AND_READ:
       prepare_to_receive_data(3);
@@ -890,9 +900,6 @@ static void handle_rx_byte(uint8_t byte)
     case CMD_SET_I2C_MODE:
     case CMD_ENABLE_VCC_OUT:
       prepare_to_receive_data(1);
-      break;
-    case CMD_SET_I2C_TIMEOUT:
-      prepare_to_receive_data(2);
       break;
     case CMD_CLEAR_BUS:
       i2c_clear_bus();
@@ -906,24 +913,6 @@ static void handle_rx_byte(uint8_t byte)
       execute_command();
       break;
     }
-    break;
-  case RX_STATE_GET_ADDRESS:
-    i2c_address = byte;
-    rx_state = RX_STATE_GET_LENGTH;
-    break;
-  case RX_STATE_GET_LENGTH:
-    command_data_length = byte;
-    command_data_received = 0;
-    if (command == CMD_I2C_WRITE && command_data_length > 0)
-    {
-      rx_state = RX_STATE_GET_DATA;
-    }
-    else
-    {
-      execute_command();
-      rx_state = RX_STATE_IDLE;
-    }
-    break;
     break;
   case RX_STATE_GET_DATA:
     assert(command_data_received < command_data_length);
