@@ -2,33 +2,7 @@
 
 // USB-to-I2C adapter firmware
 //
-//  I2C Write command format:
-//    Command:
-//      Byte 0:                'W' (0x57)
-//      Byte 1:                7-bit I2C address
-//      Byte 2:                length (0 to 255)
-//      Bytes 3 to (2+length): data to write
-//      Byte 3+length:         '.' (0x2E) to mark the end of the command
-//    Response:
-//      Byte 0:                error code (0 for success)
-//    You can use a zero-length write command to check for the presence of a
-//    device.
-//
-//  I2C Read command format:
-//    Command:
-//      Byte 0:                'R' (0x52)
-//      Byte 1:                7-bit I2C address
-//      Byte 2:                length (1 to 255)
-//      Byte 3:                '.' (0x2E) to mark the end of the command
-//    Response:
-//      Byte 0:                error code (0 for success)
-//      Bytes 1 to length:     received data (even if there was an error)
-//
-// The "bit number" in these responses is the number of times the adapter
-// successfully waited for SCL to go high before the error occurred.
-// It waits for SCL to go high once during a start condition, once during
-// a stop condition, and 9 times for each byte written or read from the
-// target.  For a NACK error, the bit number is 1 + 9 * N for some N > 0.
+// For more info, see the user's guide: https://www.pololu.com/docs/0J89
 //
 // Pins when running on usb08a/usb08b:
 //   PB0/GREEN_LED
@@ -481,7 +455,7 @@ static bool i2c_timeout_check_and_quick_tasks()
   uint32_t elapsed = time_ms - i2c_timeout_base;
   if (elapsed >= 2)
   {
-	quick_tasks();
+    quick_tasks();
   }
   return elapsed > i2c_timeout_ms;
 }
@@ -542,7 +516,7 @@ static uint8_t i2c_wait_for_flag(uint32_t mask)
 }
 
 // This is called at the end of a command to wait for the I2C module to be
-// finish performing its operation, and check for any final errors.
+// finished performing its operation, and check for any final errors.
 //
 // Note: Perhaps we should add an option to disable this part,
 // allowing for high throughput.
